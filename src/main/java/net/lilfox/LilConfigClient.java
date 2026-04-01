@@ -24,7 +24,8 @@ public class LilConfigClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         LilConfigManager.getInstance().register(LilConfigOwnConfig.getInstance());
-        LilConfigManager.getInstance().register(VanillaKeybindProvider.getInstance());
+        ClientLifecycleEvents.CLIENT_STARTED.register(client ->
+                LilConfigManager.getInstance().register(VanillaKeybindProvider.getInstance()));
 
         ClientLifecycleEvents.CLIENT_STOPPING.register(
                 client -> LilConfigManager.getInstance().saveAll());
