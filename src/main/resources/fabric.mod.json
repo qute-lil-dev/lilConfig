@@ -11,17 +11,21 @@
 		"homepage": "https://fabricmc.net/",
 		"sources": "https://github.com/FabricMC/fabric-example-mod"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/lilconfig/icon.png",
-	"environment": "*",
+	"environment": "client",
 	"entrypoints": {
-		"main": [
-			"net.lilfox.LilConfig"
+		"client": [
+			"net.lilfox.LilConfigClient"
+		],
+		"modmenu": [
+			"net.lilfox.modmenu.LilConfigModMenuApi"
 		]
 	},
-	"mixins": [
-		"lilconfig.mixins.json"
-	],
+	"suggests": {
+		"modmenu": "*"
+	},
+	"mixins": ["lilconfig.mixins.json"],
 	"depends": {
 		"fabricloader": ">=0.18.5",
 		"minecraft": "~26.1",
