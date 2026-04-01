@@ -3,6 +3,6 @@
   "minVersion": "0.8",
   "package": "net.lilfox.mixin",
   "compatibilityLevel": "JAVA_21",
-  "client": ["KeyMappingMixin"],
+  "client": ["KeyMappingMixin", "ScreenRedirectMixin"],
   "injectors": { "defaultRequire": 1 }
 }
