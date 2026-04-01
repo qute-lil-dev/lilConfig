@@ -7,6 +7,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import net.lilfox.config.*;
 import net.lilfox.hotkey.KeyBind;
@@ -91,6 +92,7 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                     IConfigBoolean b  = (IConfigBoolean) config;
                     Button hotkeyBtn = Button.builder(keyLabel(hk.getKeyBind()),
                             btn -> screen.startRebind(hk, btn))
+                            .tooltip(Tooltip.create(Component.translatable("lilconfig.tooltip.rebind")))
                             .size(HOTKEY_BTN_W, BTN_H).pos(0, 0).build();
                     Button toggleBtn = Button.builder(boolLabel(b.getValue()),
                             btn -> { b.setValue(!b.getValue()); btn.setMessage(boolLabel(b.getValue())); })
@@ -102,6 +104,7 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                     IConfigHotkey hk = (IConfigHotkey) config;
                     Button hotkeyBtn = Button.builder(keyLabel(hk.getKeyBind()),
                             btn -> screen.startRebind(hk, btn))
+                            .tooltip(Tooltip.create(Component.translatable("lilconfig.tooltip.rebind")))
                             .size(WIDGET_ZONE, BTN_H).pos(0, 0).build();
                     widgets.add(hotkeyBtn);
                 }
@@ -114,6 +117,8 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                     box.setResponder(s -> {
                         try { ci.setValue(Integer.parseInt(s.trim())); } catch (NumberFormatException ignored) {}
                     });
+                    box.setTooltip(Tooltip.create(Component.translatable("lilconfig.tooltip.range",
+                            ci.getMinValue(), ci.getMaxValue())));
                     widgets.add(box);
                 }
                 case STRING -> {
@@ -136,8 +141,8 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
             }
 
             // reset button
-            widgets.add(Button.builder(Component.translatable("lilconfig.reset"),
-                    btn -> resetRow())
+            widgets.add(Button.builder(Component.translatable("lilconfig.reset"), btn -> resetRow())
+                    .tooltip(Tooltip.create(Component.translatable("lilconfig.tooltip.reset")))
                     .size(RESET_BTN_W, BTN_H).pos(0, 0).build());
         }
 
@@ -161,7 +166,7 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
             repositionWidgets();
             // Draw config name using the entry's own content coordinates, not the mouse position
             int textY = getContentY() + (getContentHeight() - Minecraft.getInstance().font.lineHeight) / 2;
-            gfx.text(Minecraft.getInstance().font, config.getName(), getContentX(), textY, -1);
+            gfx.text(Minecraft.getInstance().font, Component.translatable(config.getName()), getContentX(), textY, -1);
             for (AbstractWidget w : widgets) {
                 w.extractRenderState(gfx, mouseX, mouseY, partialTick);
             }

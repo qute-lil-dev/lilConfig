@@ -34,6 +34,7 @@ public class ConfigInteger extends ConfigBase<Integer> {
         this.maxValue = maxValue;
     }
 
+    /** {@inheritDoc} */
     @Override
     public ConfigType getType() {
         return ConfigType.INTEGER;
@@ -76,11 +77,13 @@ public class ConfigInteger extends ConfigBase<Integer> {
         return maxValue;
     }
 
+    /** {@inheritDoc} */
     @Override
     public JsonElement toJson() {
         return new JsonPrimitive(value);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void fromJson(JsonElement element) {
         try {

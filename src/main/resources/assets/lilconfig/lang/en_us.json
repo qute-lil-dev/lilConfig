@@ -1,0 +1,20 @@
+{
+  "lilconfig.reset": "Reset",
+
+  "lilconfig.tooltip.reset": "Reset to default",
+  "lilconfig.tooltip.rebind": "Click to rebind.\nPress keys to set a combo, Enter to confirm, Esc to clear.",
+  "lilconfig.tooltip.range": "Range: %d \u2013 %d",
+
+  "settings": "Settings",
+  "demo": "Demo",
+
+  "vanilla_key_override": "Vanilla Key Override",
+  "menu_key": "Menu Key",
+
+  "show_hud": "Show HUD",
+  "debug_mode": "Debug Mode",
+  "max_items": "Max Items",
+  "server_url": "Server URL",
+  "overlay": "Overlay",
+  "screenshot": "Screenshot"
+}

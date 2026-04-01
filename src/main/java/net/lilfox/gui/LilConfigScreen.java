@@ -16,6 +16,7 @@ import net.lilfox.config.IConfigHotkey;
 import net.lilfox.hotkey.KeyBind;
 import net.lilfox.manager.IConfigProvider;
 import net.lilfox.manager.LilConfigManager;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -158,18 +159,24 @@ public class LilConfigScreen extends Screen {
     }
 
     /**
-     * Confirms the in-progress rebind session: saves {@link #pendingBind} to the
-     * target config and resets all rebind state. Does nothing if no session is active.
+     * Confirms the in-progress rebind session using whatever combo is currently
+     * accumulated. If nothing was accumulated, restores the prior binding.
+     * Does nothing if no session is active.
      */
     private void commitRebind() {
         if (rebindTarget == null) return;
-        if (!pendingBind.getKeys().isEmpty()) {
-            rebindTarget.setKeyBind(pendingBind);
-            rebindButton.setMessage(Component.literal(pendingBind.toDisplayString()));
-        } else {
-            rebindButton.setMessage(Component.literal(
-                    priorBind.getKeys().isEmpty() ? "---" : priorBind.toDisplayString()));
-        }
+        finishRebind(pendingBind.getKeys().isEmpty() ? priorBind : pendingBind);
+    }
+
+    /**
+     * Saves {@code result} to the rebind target and resets all rebind state.
+     *
+     * @param result the KeyBind to assign; may be {@link KeyBind#NONE}
+     */
+    private void finishRebind(KeyBind result) {
+        rebindTarget.setKeyBind(result);
+        rebindButton.setMessage(Component.literal(
+                result.getKeys().isEmpty() ? "---" : result.toDisplayString()));
         rebindTarget = null;
         rebindButton = null;
         pendingBind  = KeyBind.NONE;
@@ -211,12 +218,14 @@ public class LilConfigScreen extends Screen {
     @Override
     public boolean keyPressed(KeyEvent event) {
         if (rebindTarget != null) {
-            // Every key (including ESC, ENTER) is added to the combo.
-            // Click outside the button to confirm and exit rebind.
-            pendingBind = pendingBind.withKey(
-                    InputConstants.Type.KEYSYM.getOrCreate(event.key()));
-            rebindButton.setMessage(
-                    Component.literal(pendingBind.toDisplayString() + " ..."));
+            int key = event.key();
+            if (key == GLFW.GLFW_KEY_ESCAPE || key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {
+                // First press → clear to NONE; subsequent press → confirm accumulated combo.
+                finishRebind(pendingBind.getKeys().isEmpty() ? KeyBind.NONE : pendingBind);
+            } else {
+                pendingBind = pendingBind.withKey(InputConstants.Type.KEYSYM.getOrCreate(key));
+                rebindButton.setMessage(Component.literal(pendingBind.toDisplayString() + " ..."));
+            }
             return true;
         }
         return super.keyPressed(event);

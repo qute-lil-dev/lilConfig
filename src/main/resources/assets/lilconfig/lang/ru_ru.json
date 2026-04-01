@@ -1,0 +1,20 @@
+{
+  "lilconfig.reset": "Сбросить",
+
+  "lilconfig.tooltip.reset": "Сбросить к значению по умолчанию",
+  "lilconfig.tooltip.rebind": "Нажмите для переназначения.\nНажмите клавиши для задания комбинации, Enter — подтвердить, Esc — сбросить.",
+  "lilconfig.tooltip.range": "Диапазон: %d – %d",
+
+  "settings": "Настройки",
+  "demo": "Демо",
+
+  "vanilla_key_override": "Переопределение ванильных клавиш",
+  "menu_key": "Клавиша меню",
+
+  "show_hud": "Показывать HUD",
+  "debug_mode": "Режим отладки",
+  "max_items": "Максимум предметов",
+  "server_url": "URL сервера",
+  "overlay": "Оверлей",
+  "screenshot": "Снимок экрана"
+}

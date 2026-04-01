@@ -20,31 +20,37 @@ public class ConfigBoolean extends ConfigBase<Boolean> implements IConfigBoolean
         super(name, defaultValue);
     }
 
+    /** {@inheritDoc} */
     @Override
     public ConfigType getType() {
         return ConfigType.BOOLEAN;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean getValue() {
         return value;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setValue(boolean value) {
         this.value = value;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean getDefaultValue() {
         return defaultValue;
     }
 
+    /** {@inheritDoc} */
     @Override
     public JsonElement toJson() {
         return new JsonPrimitive(value);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void fromJson(JsonElement element) {
         try {

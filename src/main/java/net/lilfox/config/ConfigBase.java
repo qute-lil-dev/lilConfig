@@ -40,27 +40,32 @@ public abstract class ConfigBase<T> implements IConfig {
         this.value = defaultValue;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getName() {
         return name;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean isModified() {
         return !Objects.equals(value, defaultValue);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void resetToDefault() {
         this.value = defaultValue;
     }
 
+    /** {@inheritDoc} */
     @Override
     @Nullable
     public String getEffectButtonLabel() {
         return effectButtonLabel;
     }
 
+    /** {@inheritDoc} */
     @Override
     @Nullable
     public Runnable getEffectAction() {

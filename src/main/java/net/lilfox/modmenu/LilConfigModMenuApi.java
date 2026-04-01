@@ -15,6 +15,7 @@ import net.lilfox.gui.LilConfigScreen;
  */
 public class LilConfigModMenuApi implements ModMenuApi {
 
+    /** {@inheritDoc} */
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
         return parent -> LilConfigScreen.create(parent, LilConfigOwnConfig.getInstance());

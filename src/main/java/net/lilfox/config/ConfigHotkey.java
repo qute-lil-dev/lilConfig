@@ -32,31 +32,37 @@ public class ConfigHotkey extends ConfigBase<KeyBind> implements IConfigHotkey {
         this(name, KeyBind.parse(keyNames));
     }
 
+    /** {@inheritDoc} */
     @Override
     public ConfigType getType() {
         return ConfigType.HOTKEY;
     }
 
+    /** {@inheritDoc} */
     @Override
     public KeyBind getKeyBind() {
         return value;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setKeyBind(KeyBind keyBind) {
         this.value = keyBind != null ? keyBind : KeyBind.NONE;
     }
 
+    /** {@inheritDoc} */
     @Override
     public KeyBind getDefaultKeyBind() {
         return defaultValue;
     }
 
+    /** {@inheritDoc} */
     @Override
     public JsonElement toJson() {
         return new JsonPrimitive(value.toSaveString());
     }
 
+    /** {@inheritDoc} */
     @Override
     public void fromJson(JsonElement element) {
         try {

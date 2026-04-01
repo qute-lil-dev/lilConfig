@@ -24,7 +24,7 @@ public class ConfigGroupTab implements Tab {
      * @param screen  the owning screen (needed to size the list)
      */
     public ConfigGroupTab(ConfigGroup group, LilConfigScreen screen) {
-        this.title = Component.literal(group.getName());
+        this.title = Component.translatable(group.getName());
         this.list  = new ConfigEntryList(screen, group);
     }
 

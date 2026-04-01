@@ -58,36 +58,43 @@ public class ConfigHotkeyedBoolean extends ConfigBase<Boolean>
         this(name, defaultValue, KeyBind.parse(keyNames));
     }
 
+    /** {@inheritDoc} */
     @Override
     public ConfigType getType() {
         return ConfigType.HOTKEYED_BOOLEAN;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean getValue() {
         return value;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setValue(boolean value) {
         this.value = value;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean getDefaultValue() {
         return defaultValue;
     }
 
+    /** {@inheritDoc} */
     @Override
     public KeyBind getKeyBind() {
         return keyBind;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setKeyBind(KeyBind keyBind) {
         this.keyBind = keyBind != null ? keyBind : KeyBind.NONE;
     }
 
+    /** {@inheritDoc} */
     @Override
     public KeyBind getDefaultKeyBind() {
         return defaultKeyBind;
@@ -129,6 +136,7 @@ public class ConfigHotkeyedBoolean extends ConfigBase<Boolean>
         this.keyBind = defaultKeyBind;
     }
 
+    /** {@inheritDoc} */
     @Override
     public JsonElement toJson() {
         JsonObject obj = new JsonObject();
@@ -137,6 +145,7 @@ public class ConfigHotkeyedBoolean extends ConfigBase<Boolean>
         return obj;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void fromJson(JsonElement element) {
         try {

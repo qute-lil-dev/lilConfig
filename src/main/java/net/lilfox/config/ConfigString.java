@@ -20,6 +20,7 @@ public class ConfigString extends ConfigBase<String> {
         super(name, defaultValue != null ? defaultValue : "");
     }
 
+    /** {@inheritDoc} */
     @Override
     public ConfigType getType() {
         return ConfigType.STRING;
@@ -49,11 +50,13 @@ public class ConfigString extends ConfigBase<String> {
         return defaultValue;
     }
 
+    /** {@inheritDoc} */
     @Override
     public JsonElement toJson() {
         return new JsonPrimitive(value);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void fromJson(JsonElement element) {
         try {
