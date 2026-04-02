@@ -8,6 +8,8 @@ import net.lilfox.config.ConfigGroup;
 
 import java.util.function.Consumer;
 
+import org.jspecify.annotations.NonNull;
+
 /**
  * A {@link Tab} that wraps a {@link ConfigGroup} and owns the
  * {@link ConfigEntryList} shown when this tab is selected.
@@ -34,12 +36,12 @@ public class ConfigGroupTab implements Tab {
     }
 
     @Override
-    public Component getTabTitle() {
+    public @NonNull Component getTabTitle() {
         return title;
     }
 
     @Override
-    public Component getTabExtraNarration() {
+    public @NonNull Component getTabExtraNarration() {
         return Component.empty();
     }
 

@@ -15,6 +15,8 @@ import net.lilfox.hotkey.KeyBind;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jspecify.annotations.NonNull;
+
 /**
  * Scrollable list that renders one row per {@link IConfig} entry.
  *
@@ -173,12 +175,12 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
         }
 
         @Override
-        public List<? extends net.minecraft.client.gui.components.events.GuiEventListener> children() {
+        public @NonNull List<? extends net.minecraft.client.gui.components.events.GuiEventListener> children() {
             return widgets;
         }
 
         @Override
-        public List<? extends net.minecraft.client.gui.narration.NarratableEntry> narratables() {
+        public @NonNull List<? extends net.minecraft.client.gui.narration.NarratableEntry> narratables() {
             return widgets;
         }
 

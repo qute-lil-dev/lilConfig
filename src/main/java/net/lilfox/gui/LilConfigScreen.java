@@ -16,6 +16,8 @@ import net.lilfox.config.IConfigHotkey;
 import net.lilfox.hotkey.KeyBind;
 import net.lilfox.manager.IConfigProvider;
 import net.lilfox.manager.LilConfigManager;
+
+import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -188,7 +190,7 @@ public class LilConfigScreen extends Screen {
     // -------------------------------------------------------------------------
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor gfx, int mouseX, int mouseY, float partialTick) {
+    public void extractRenderState(@NonNull GuiGraphicsExtractor gfx, int mouseX, int mouseY, float partialTick) {
         extractMenuBackground(gfx);
         super.extractRenderState(gfx, mouseX, mouseY, partialTick);
 
@@ -216,7 +218,7 @@ public class LilConfigScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(KeyEvent event) {
+    public boolean keyPressed(@NonNull KeyEvent event) {
         if (rebindTarget != null) {
             int key = event.key();
             if (key == GLFW.GLFW_KEY_ESCAPE || key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {
@@ -241,7 +243,7 @@ public class LilConfigScreen extends Screen {
      * because {@link #rebindTarget} is still {@code null} at that point.
      */
     @Override
-    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
         if (rebindTarget != null) {
             if (rebindButton.isMouseOver(event.x(), event.y())) {
                 InputConstants.Key mouseKey = InputConstants.Type.MOUSE.getOrCreate(event.button());
