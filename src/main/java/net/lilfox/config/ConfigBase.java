@@ -26,6 +26,8 @@ public abstract class ConfigBase<T> implements IConfig {
 
     @Nullable private String effectButtonLabel;
     @Nullable private Runnable effectAction;
+    private boolean dirty = false;
+    @Nullable private Runnable onChange;
 
     /**
      * Creates a new config entry with the given name and default value.
@@ -54,8 +56,42 @@ public abstract class ConfigBase<T> implements IConfig {
 
     /** {@inheritDoc} */
     @Override
+    public boolean isDirty()  { return dirty; }
+
+    /** {@inheritDoc} */
+    @Override
+    public void markDirty()   { dirty = true; }
+
+    /** {@inheritDoc} */
+    @Override
+    public void markClean()   { dirty = false; }
+
+    /**
+     * Registers a listener called each time the value changes programmatically.
+     * Not invoked during {@link #fromJson} (load from disk).
+     *
+     * @param listener the callback; replaces any previously set listener
+     * @return this instance for fluent chaining
+     */
+    public ConfigBase<T> withOnChange(Runnable listener) {
+        this.onChange = listener;
+        return this;
+    }
+
+    /**
+     * Marks this entry dirty and notifies the registered onChange listener, if any.
+     * Called by {@code setValue} in subclasses. Never called from {@code fromJson}.
+     */
+    protected void notifyChanged() {
+        markDirty();
+        if (onChange != null) onChange.run();
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public void resetToDefault() {
         this.value = defaultValue;
+        markDirty();
     }
 
     /** {@inheritDoc} */

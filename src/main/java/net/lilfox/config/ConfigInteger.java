@@ -54,6 +54,7 @@ public class ConfigInteger extends ConfigBase<Integer> {
      */
     public void setValue(int value) {
         this.value = Math.clamp(value, minValue, maxValue);
+        notifyChanged();
     }
 
     /**
@@ -87,8 +88,19 @@ public class ConfigInteger extends ConfigBase<Integer> {
     @Override
     public void fromJson(JsonElement element) {
         try {
-            setValue(element.getAsInt());
+            this.value = Math.clamp(element.getAsInt(), minValue, maxValue);
         } catch (Exception ignored) {}
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @return this {@code ConfigInteger} for fluent chaining
+     */
+    @Override
+    public ConfigInteger withOnChange(Runnable listener) {
+        super.withOnChange(listener);
+        return this;
     }
 
     /**

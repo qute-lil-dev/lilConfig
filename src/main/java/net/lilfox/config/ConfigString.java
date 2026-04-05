@@ -41,6 +41,7 @@ public class ConfigString extends ConfigBase<String> {
      */
     public void setValue(String value) {
         this.value = value != null ? value : "";
+        notifyChanged();
     }
 
     /**
@@ -62,6 +63,17 @@ public class ConfigString extends ConfigBase<String> {
         try {
             this.value = element.getAsString();
         } catch (Exception ignored) {}
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @return this {@code ConfigString} for fluent chaining
+     */
+    @Override
+    public ConfigString withOnChange(Runnable listener) {
+        super.withOnChange(listener);
+        return this;
     }
 
     /**

@@ -56,11 +56,18 @@ public final class ConfigSerializer {
 
     /**
      * Saves all config values from the given provider to its JSON file.
-     * Creates parent directories if necessary. Logs a warning on I/O failure.
+     * Skips writing if no config entry is dirty. Creates parent directories if
+     * necessary. Marks all entries clean after a successful write.
+     * Logs a warning on I/O failure.
      *
      * @param provider the provider to save
      */
     public static void save(IConfigProvider provider) {
+        boolean anyDirty = provider.getConfigGroups().stream()
+                .flatMap(g -> g.getConfigs().stream())
+                .anyMatch(IConfig::isDirty);
+        if (!anyDirty) return;
+
         JsonObject root = new JsonObject();
         for (ConfigGroup group : provider.getConfigGroups()) {
             JsonObject groupObj = new JsonObject();
@@ -75,6 +82,9 @@ public final class ConfigSerializer {
             try (Writer writer = Files.newBufferedWriter(path)) {
                 GSON.toJson(root, writer);
             }
+            provider.getConfigGroups().stream()
+                    .flatMap(g -> g.getConfigs().stream())
+                    .forEach(IConfig::markClean);
         } catch (IOException e) {
             LOGGER.warn("Failed to save config for '{}': {}", provider.getModId(), e.getMessage());
         }
@@ -99,7 +109,7 @@ public final class ConfigSerializer {
                 if (groupObj == null) continue;
                 for (IConfig config : group.getConfigs()) {
                     JsonElement el = groupObj.get(config.getName());
-                    if (el != null) config.fromJson(el);
+                    if (el != null) { config.fromJson(el); config.markClean(); }
                 }
             }
         } catch (IOException | JsonParseException e) {

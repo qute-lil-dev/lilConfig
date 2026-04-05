@@ -5,6 +5,8 @@ import net.lilfox.config.ConfigGroup;
 import net.lilfox.config.ConfigHotkeyedBoolean;
 import net.lilfox.config.IConfig;
 import net.lilfox.config.IConfigHotkey;
+import net.lilfox.hotkey.HotkeyContext;
+import net.lilfox.hotkey.IHotkeyCallback;
 import net.lilfox.hotkey.KeyBind;
 import net.lilfox.persist.ConfigSerializer;
 import net.lilfox.vanilla.VanillaKeybindProvider;
@@ -27,18 +29,19 @@ import java.util.List;
  * and saves all providers when explicitly requested (e.g. on screen close or
  * client shutdown).
  *
- * <p>Hotkey triggering uses fire-on-release semantics: a hotkey fires when the
- * last-held key is released, provided the keys were pressed in recorded order and
- * no superset binding was simultaneously active (superset inhibition).
+ * <p>Hotkey triggering uses fire-on-press semantics: a hotkey fires on the tick
+ * when all keys first become simultaneously held (leading edge), provided the keys
+ * were pressed in recorded order and no superset binding was simultaneously active
+ * (superset inhibition).
  */
 public final class LilConfigManager {
 
     private static final LilConfigManager INSTANCE = new LilConfigManager();
 
     private final List<IConfigProvider> providers = new ArrayList<>();
-    private final List<ConfigHotkeyedBoolean> hotkeyedBooleans = new ArrayList<>();
+    private final List<IConfigHotkey> allHotkeys = new ArrayList<>();
 
-    /** Gesture state keyed by object identity (provider or ConfigHotkeyedBoolean). */
+    /** Gesture state keyed by object identity (provider or IConfigHotkey). */
     private final Map<Object, GestureState> gestureStates =
             Collections.synchronizedMap(new IdentityHashMap<>());
 
@@ -70,8 +73,8 @@ public final class LilConfigManager {
         providers.add(provider);
         for (ConfigGroup g : provider.getConfigGroups())
             for (IConfig c : g.getConfigs())
-                if (c instanceof ConfigHotkeyedBoolean hb)
-                    hotkeyedBooleans.add(hb);
+                if (c instanceof IConfigHotkey hk)
+                    allHotkeys.add(hk);
         ConfigSerializer.load(provider);
     }
 
@@ -132,21 +135,30 @@ public final class LilConfigManager {
     }
 
     // -------------------------------------------------------------------------
-    // Hotkey tick — fire-on-release, order-aware, superset-inhibited
+    // Hotkey tick — fire-on-press, order-aware, superset-inhibited
     // -------------------------------------------------------------------------
 
     /**
-     * Polls all registered {@link ConfigHotkeyedBoolean} entries and toggles those
-     * whose hotkey just fired this tick. Respects each entry's
-     * {@link ConfigHotkeyedBoolean.HotkeyContext}.
+     * Polls all registered {@link IConfigHotkey} entries and fires those whose hotkey
+     * triggered this tick. Respects each entry's {@link HotkeyContext}.
+     *
+     * <p>On fire:
+     * <ul>
+     *   <li>{@link ConfigHotkeyedBoolean} entries toggle their boolean value.</li>
+     *   <li>Any entry with a registered {@link IHotkeyCallback} invokes it.</li>
+     * </ul>
      *
      * <p>Firing semantics:
      * <ul>
-     *   <li>A hotkey fires when the last-held key is <em>released</em> (not on press),
-     *       so that e.g. pressing Ctrl+Alt+A does not accidentally fire a Ctrl hotkey.</li>
+     *   <li>A hotkey fires when all keys are simultaneously held for the first time
+     *       (leading edge / fire-on-press), so that e.g. a Ctrl hotkey does not
+     *       accidentally fire when Ctrl+Alt+A is pressed.</li>
      *   <li>Keys must be pressed in the order they appear in the {@link KeyBind}
      *       (order of assignment during recording).</li>
-     *   <li>If a superset binding was simultaneously fully held, the subset is suppressed.</li>
+     *   <li>If another binding that shares at least one key is simultaneously fully held and
+     *       is not a subset of this binding, this binding is suppressed (active-key inhibition).
+     *       This prevents keys already claimed by an active combo from triggering a new combo,
+     *       while still allowing a superset combo to extend the active one.</li>
      * </ul>
      *
      * @param currentScreen the currently open screen, or {@code null} if in-game
@@ -155,38 +167,46 @@ public final class LilConfigManager {
         boolean inGame = currentScreen == null;
         long windowHandle = Minecraft.getInstance().getWindow().handle();
 
-        record Entry(ConfigHotkeyedBoolean hb, KeyBind bind, GestureState state) {}
+        record Entry(IConfigHotkey hk, KeyBind bind, GestureState state) {}
         List<Entry> active = new ArrayList<>();
 
-        for (ConfigHotkeyedBoolean hb : hotkeyedBooleans) {
-            boolean contextMatch = switch (hb.getHotkeyContext()) {
+        for (IConfigHotkey hk : allHotkeys) {
+            boolean contextMatch = switch (hk.getHotkeyContext()) {
                 case IN_GAME  -> inGame;
                 case GUI_OPEN -> !inGame;
                 case ALWAYS   -> true;
             };
-            KeyBind bind = hb.getKeyBind();
+            KeyBind bind = hk.getKeyBind();
             if (!contextMatch || bind == KeyBind.NONE || bind.getKeys().isEmpty()) continue;
 
-            GestureState state = getOrCreateState(hb, bind.getKeys().size());
+            GestureState state = getOrCreateState(hk, bind.getKeys().size());
             tickGesture(state, bind, windowHandle);
-            active.add(new Entry(hb, bind, state));
+            active.add(new Entry(hk, bind, state));
         }
 
-        // Superset inhibition: suppress any binding whose keys are a proper subset
-        // of another currently fully-held binding (wasFullyHeld), regardless of
-        // whether that superset itself fired.
+        // Active-key inhibition: suppress X if another currently held binding Y shares
+        // at least one key with X and Y is not a subset of X (Y contributes a key that
+        // X does not contain, meaning that key is already claimed by Y).
+        // This subsumes the old superset-inhibition rule.
         for (Entry e1 : active) {
             if (!e1.state.pendingFire) continue;
             for (Entry e2 : active) {
                 if (e2 == e1) continue;
-                if (e2.state.wasFullyHeld && isProperSubset(e1.bind, e2.bind)) {
+                if (e2.state.wasFullyHeld
+                        && hasKeyOverlap(e1.bind, e2.bind)
+                        && !isSubset(e2.bind, e1.bind)) {
                     e1.state.pendingFire = false;
                     break;
                 }
             }
         }
         for (Entry e : active) {
-            if (e.state.pendingFire) e.hb.setValue(!e.hb.getValue());
+            if (!e.state.pendingFire) continue;
+            if (e.hk() instanceof ConfigHotkeyedBoolean hb) {
+                hb.setValue(!hb.getValue());
+            }
+            IHotkeyCallback cb = e.hk().getCallback();
+            if (cb != null) cb.onHotkey();
         }
     }
 
@@ -209,12 +229,14 @@ public final class LilConfigManager {
             active.add(new MenuEntry(provider, menuKey, state));
         }
 
-        // Superset inhibition (same rule as tickHotkeys)
+        // Active-key inhibition (same rule as tickHotkeys)
         for (MenuEntry e1 : active) {
             if (!e1.state.pendingFire) continue;
             for (MenuEntry e2 : active) {
                 if (e2 == e1) continue;
-                if (e2.state.wasFullyHeld && isProperSubset(e1.bind, e2.bind)) {
+                if (e2.state.wasFullyHeld
+                        && hasKeyOverlap(e1.bind, e2.bind)
+                        && !isSubset(e2.bind, e1.bind)) {
                     e1.state.pendingFire = false;
                     break;
                 }
@@ -298,7 +320,7 @@ public final class LilConfigManager {
             }
         }
 
-        // Fire: all keys became held this tick (transition from not-fully-held), order was valid
+        // Fire: transition to fully-held (leading edge), order was valid.
         state.pendingFire = fullyHeld && !state.wasFullyHeld && state.orderValid();
 
         // Reset gesture state when all keys are released
@@ -311,15 +333,21 @@ public final class LilConfigManager {
         state.prevHeld = curr;
     }
 
+    /** Returns {@code true} if {@code a} and {@code b} share at least one key. */
+    private static boolean hasKeyOverlap(KeyBind a, KeyBind b) {
+        List<InputConstants.Key> bKeys = b.getKeys();
+        for (InputConstants.Key k : a.getKeys()) {
+            if (bKeys.contains(k)) return true;
+        }
+        return false;
+    }
+
     /**
-     * Returns {@code true} if every key in {@code sub} is also present in {@code sup},
-     * and {@code sup} has at least one additional key (i.e. strictly larger).
+     * Returns {@code true} if every key in {@code sub} is also present in {@code sup}
+     * (non-strict: equal sets return {@code true}).
      */
-    private static boolean isProperSubset(KeyBind sub, KeyBind sup) {
-        List<InputConstants.Key> subKeys = sub.getKeys();
-        List<InputConstants.Key> supKeys = sup.getKeys();
-        if (subKeys.size() >= supKeys.size()) return false;
-        return supKeys.containsAll(subKeys);
+    private static boolean isSubset(KeyBind sub, KeyBind sup) {
+        return sup.getKeys().containsAll(sub.getKeys());
     }
 
 }

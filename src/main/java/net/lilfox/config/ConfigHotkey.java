@@ -2,7 +2,10 @@ package net.lilfox.config;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import net.lilfox.hotkey.HotkeyContext;
+import net.lilfox.hotkey.IHotkeyCallback;
 import net.lilfox.hotkey.KeyBind;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A standalone hotkey configuration entry backed by a rebind button in the GUI.
@@ -54,6 +57,39 @@ public class ConfigHotkey extends ConfigBase<KeyBind> implements IConfigHotkey {
     @Override
     public KeyBind getDefaultKeyBind() {
         return defaultValue;
+    }
+
+    private HotkeyContext hotkeyContext = HotkeyContext.IN_GAME;
+    private @Nullable IHotkeyCallback callback;
+
+    /** {@inheritDoc} */
+    @Override
+    public HotkeyContext getHotkeyContext() { return hotkeyContext; }
+
+    /**
+     * Sets the context in which this hotkey is active.
+     *
+     * @param ctx the desired context
+     * @return this instance for fluent chaining
+     */
+    public ConfigHotkey withHotkeyContext(HotkeyContext ctx) {
+        this.hotkeyContext = ctx;
+        return this;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public @Nullable IHotkeyCallback getCallback() { return callback; }
+
+    /**
+     * Sets the callback to invoke when this hotkey fires.
+     *
+     * @param cb the callback; pass {@code null} to remove
+     * @return this instance for fluent chaining
+     */
+    public ConfigHotkey withCallback(IHotkeyCallback cb) {
+        this.callback = cb;
+        return this;
     }
 
     /** {@inheritDoc} */

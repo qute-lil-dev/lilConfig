@@ -50,6 +50,21 @@ public interface IConfig {
     void fromJson(JsonElement element);
 
     /**
+     * Returns {@code true} if the value has changed since the last save or load.
+     */
+    boolean isDirty();
+
+    /**
+     * Marks this entry as having unsaved changes.
+     */
+    void markDirty();
+
+    /**
+     * Clears the dirty flag (called after save or load).
+     */
+    void markClean();
+
+    /**
      * Returns the translation key for the optional effect button label,
      * or {@code null} if this entry has no effect button.
      */

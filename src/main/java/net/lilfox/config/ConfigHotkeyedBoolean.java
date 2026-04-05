@@ -2,7 +2,10 @@ package net.lilfox.config;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.lilfox.hotkey.HotkeyContext;
+import net.lilfox.hotkey.IHotkeyCallback;
 import net.lilfox.hotkey.KeyBind;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A configuration entry that combines a boolean toggle with a configurable hotkey.
@@ -18,20 +21,10 @@ import net.lilfox.hotkey.KeyBind;
 public class ConfigHotkeyedBoolean extends ConfigBase<Boolean>
         implements IConfigBoolean, IConfigHotkey {
 
-    /**
-     * Controls when the hotkey is active.
-     *
-     * <ul>
-     *   <li>{@link #IN_GAME} — only while no screen is open (default)</li>
-     *   <li>{@link #GUI_OPEN} — only while any screen is open</li>
-     *   <li>{@link #ALWAYS} — regardless of screen state</li>
-     * </ul>
-     */
-    public enum HotkeyContext { IN_GAME, GUI_OPEN, ALWAYS }
-
     private KeyBind keyBind;
     private final KeyBind defaultKeyBind;
     private HotkeyContext hotkeyContext = HotkeyContext.IN_GAME;
+    private @Nullable IHotkeyCallback callback;
 
     /**
      * Creates a new hotkeyed boolean config entry.
@@ -74,6 +67,7 @@ public class ConfigHotkeyedBoolean extends ConfigBase<Boolean>
     @Override
     public void setValue(boolean value) {
         this.value = value;
+        notifyChanged();
     }
 
     /** {@inheritDoc} */
@@ -103,6 +97,7 @@ public class ConfigHotkeyedBoolean extends ConfigBase<Boolean>
     /**
      * Returns the context in which this hotkey is active.
      */
+    @Override
     public HotkeyContext getHotkeyContext() {
         return hotkeyContext;
     }
@@ -115,6 +110,21 @@ public class ConfigHotkeyedBoolean extends ConfigBase<Boolean>
      */
     public ConfigHotkeyedBoolean withHotkeyContext(HotkeyContext ctx) {
         this.hotkeyContext = ctx;
+        return this;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public @Nullable IHotkeyCallback getCallback() { return callback; }
+
+    /**
+     * Sets the callback to invoke when this hotkey fires.
+     *
+     * @param cb the callback; pass {@code null} to remove
+     * @return this instance for fluent chaining
+     */
+    public ConfigHotkeyedBoolean withCallback(IHotkeyCallback cb) {
+        this.callback = cb;
         return this;
     }
 
@@ -157,6 +167,16 @@ public class ConfigHotkeyedBoolean extends ConfigBase<Boolean>
                 this.value = element.getAsBoolean();
             }
         } catch (Exception ignored) {}
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @return this {@code ConfigHotkeyedBoolean} for fluent chaining
+     */
+    public ConfigHotkeyedBoolean withOnChange(Runnable listener) {
+        super.withOnChange(listener);
+        return this;
     }
 
     /**

@@ -36,6 +36,7 @@ public class ConfigBoolean extends ConfigBase<Boolean> implements IConfigBoolean
     @Override
     public void setValue(boolean value) {
         this.value = value;
+        notifyChanged();
     }
 
     /** {@inheritDoc} */
@@ -56,6 +57,17 @@ public class ConfigBoolean extends ConfigBase<Boolean> implements IConfigBoolean
         try {
             this.value = element.getAsBoolean();
         } catch (Exception ignored) {}
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @return this {@code ConfigBoolean} for fluent chaining
+     */
+    @Override
+    public ConfigBoolean withOnChange(Runnable listener) {
+        super.withOnChange(listener);
+        return this;
     }
 
     /**

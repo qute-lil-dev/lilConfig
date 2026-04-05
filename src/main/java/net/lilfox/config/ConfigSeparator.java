@@ -29,6 +29,9 @@ public final class ConfigSeparator implements IConfig {
     @Override public void resetToDefault()                  {}
     @Override public JsonElement toJson()                   { return JsonNull.INSTANCE; }
     @Override public void fromJson(JsonElement element)     {}
+    @Override public boolean isDirty()                      { return false; }
+    @Override public void markDirty()                       {}
+    @Override public void markClean()                       {}
     @Override @Nullable public String getEffectButtonLabel() { return null; }
     @Override @Nullable public Runnable getEffectAction()    { return null; }
 }
