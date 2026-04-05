@@ -1,7 +1,6 @@
 package net.lilfox.hotkey;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import net.lilfox.hotkey.MouseButtonTracker;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
 
