@@ -46,8 +46,15 @@ public final class LilConfigOwnConfig implements IConfigProvider {
             List.of(VANILLA_KEY_OVERRIDE, VANILLA_UI_EMBED, MENU_KEY));
 
     private static final ConfigGroup DEMO = new ConfigGroup("demo",
-            List.of(DemoConfig.SHOW_HUD, DemoConfig.DEBUG_MODE, DemoConfig.MAX_ITEMS,
-                    DemoConfig.SERVER_URL, DemoConfig.OVERLAY, DemoConfig.SCREENSHOT));
+            List.of(
+                    DemoConfig.SHOW_HUD, DemoConfig.DEBUG_MODE,
+                    DemoConfig.SEP_VALUES,
+                    DemoConfig.MAX_ITEMS, DemoConfig.RENDER_SCALE, DemoConfig.QUALITY,
+                    DemoConfig.SEP_NETWORK,
+                    DemoConfig.SERVER_URL,
+                    DemoConfig.SEP_HOTKEYS,
+                    DemoConfig.OVERLAY, DemoConfig.SCREENSHOT
+            ));
 
     private LilConfigOwnConfig() {}
 

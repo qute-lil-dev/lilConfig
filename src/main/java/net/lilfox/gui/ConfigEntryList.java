@@ -153,6 +153,29 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                     box.setResponder(cs::setValue);
                     widgets.add(box);
                 }
+                case OPTION_LIST -> {
+                    IConfigOptionList<?> cfg = (IConfigOptionList<?>) config;
+                    Button btn = Button.builder(
+                                    optionLabel(cfg),
+                                    b -> { cfg.cycle(); b.setMessage(optionLabel(cfg)); })
+                            .size(WIDGET_ZONE, BTN_H).pos(0, 0).build();
+                    widgets.add(btn);
+                }
+                case DOUBLE -> {
+                    ConfigDouble cd = (ConfigDouble) config;
+                    EditBox box = new EditBox(Minecraft.getInstance().font,
+                            0, 0, WIDGET_ZONE, BTN_H,
+                            Component.literal(cd.getName()));
+                    box.setValue(String.valueOf(cd.getValue()));
+                    box.setResponder(s -> {
+                        try { cd.setValue(Double.parseDouble(s.trim())); } catch (NumberFormatException ignored) {}
+                    });
+                    if (Double.isFinite(cd.getMin()) || Double.isFinite(cd.getMax())) {
+                        box.setTooltip(Tooltip.create(Component.translatable("lilconfig.tooltip.range",
+                                cd.getMin(), cd.getMax())));
+                    }
+                    widgets.add(box);
+                }
                 case SEPARATOR -> { return; }
             }
 
@@ -218,6 +241,12 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
             config.resetToDefault();
             widgets.clear();
             buildWidgets(this.screen);
+        }
+
+        // @SuppressWarnings("null"): E is Enum<E> — getValue() is never null; JDT false positive on wildcard capture.
+        @SuppressWarnings("null")
+        private static Component optionLabel(IConfigOptionList<?> cfg) {
+            return Component.translatable(cfg.getValue().name().toLowerCase());
         }
 
         private static Component boolLabel(boolean v) {

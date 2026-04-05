@@ -16,5 +16,9 @@ public enum ConfigType {
     /** A free-form string value backed by a text field. */
     STRING,
     /** A non-interactive section divider label. No value, no widget, not serialised. */
-    SEPARATOR
+    SEPARATOR,
+    /** A cyclic enum-based option selector. */
+    OPTION_LIST,
+    /** A double-precision floating-point value with optional minimum and maximum bounds. */
+    DOUBLE
 }

@@ -23,6 +23,8 @@ classes/
 bin/
 .classpath
 .project
+# decompiled class files dumped by VS Code Java extension (Go to Definition)
+/net/
 
 # macos
 

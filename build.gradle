@@ -1,6 +1,15 @@
 plugins {
 	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 	id 'maven-publish'
+	id 'com.modrinth.minotaur' version '2.9.0'
+	id 'net.darkhax.curseforgegradle' version '1.+'
+}
+
+if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_25)) {
+	throw new GradleException(
+		"This project requires Java 25+. Current: ${JavaVersion.current()}.\n" +
+		"Set org.gradle.java.home in your ~/.gradle/gradle.properties pointing to a JDK 25 installation."
+	)
 }
 
 version = project.mod_version + "-" + project.minecraft_version
@@ -80,5 +89,36 @@ publishing {
 		// Notice: This block does NOT have the same function as the block in the top level.
 		// The repositories here will be used for publishing your artifact, not for
 		// retrieving dependencies.
+	}
+}
+
+if (project.modrinth_id != "changeme") {
+	modrinth {
+		token = System.getenv("MODRINTH_TOKEN")
+		projectId = project.modrinth_id
+		versionNumber = project.version
+		versionType = project.release_type
+		uploadFile = tasks.named("jar")
+		additionalFiles = [tasks.named("sourcesJar")]
+		gameVersions = [project.minecraft_version]
+		loaders = ["fabric"]
+		dependencies {
+			required.project "fabric-api"
+		}
+	}
+}
+
+if (project.curseforge_id != "changeme") {
+	tasks.register("publishCurseForge", net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+		apiToken = System.getenv("CURSEFORGE_TOKEN")
+
+		def mainFile = upload(project.curseforge_id, project.tasks.named("jar"))
+		mainFile.changelog = ""
+		mainFile.changelogType = "markdown"
+		mainFile.releaseType = project.release_type
+		mainFile.addJavaVersion("Java 25")
+		mainFile.addModLoader("Fabric")
+		mainFile.addGameVersion(project.minecraft_version)
+		mainFile.withAdditionalFile(project.tasks.named("sourcesJar"))
 	}
 }
