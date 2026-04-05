@@ -12,6 +12,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.lilfox.config.IConfig;
 import net.lilfox.config.IConfigHotkey;
 import net.lilfox.hotkey.KeyBind;
 import net.lilfox.manager.IConfigProvider;
@@ -161,6 +162,18 @@ public class LilConfigScreen extends Screen {
     }
 
     /**
+     * Returns {@code true} if {@code config} is the entry currently being rebound.
+     * Used by {@link ConfigEntryList.ConfigRow} to skip per-frame label updates
+     * while the rebind placeholder is displayed.
+     *
+     * @param config the config entry to test
+     * @return {@code true} if an active rebind session targets this entry
+     */
+    boolean isRebinding(IConfig config) {
+        return config instanceof IConfigHotkey hk && rebindTarget == hk;
+    }
+
+    /**
      * Confirms the in-progress rebind session using whatever combo is currently
      * accumulated. If nothing was accumulated, restores the prior binding.
      * Does nothing if no session is active.
@@ -177,8 +190,7 @@ public class LilConfigScreen extends Screen {
      */
     private void finishRebind(KeyBind result) {
         rebindTarget.setKeyBind(result);
-        rebindButton.setMessage(Component.literal(
-                result.getKeys().isEmpty() ? "---" : result.toDisplayString()));
+        rebindButton.setMessage(ConfigEntryList.keyLabel(result, rebindTarget));
         rebindTarget = null;
         rebindButton = null;
         pendingBind  = KeyBind.NONE;
@@ -210,6 +222,7 @@ public class LilConfigScreen extends Screen {
      * @param btn    the button widget to update with the new label
      */
     public void startRebind(IConfigHotkey target, Button btn) {
+        commitRebind();
         this.rebindTarget = target;
         this.rebindButton = btn;
         this.priorBind    = target.getKeyBind();

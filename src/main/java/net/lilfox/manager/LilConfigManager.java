@@ -4,8 +4,10 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.lilfox.config.ConfigGroup;
 import net.lilfox.config.ConfigHotkeyedBoolean;
 import net.lilfox.config.IConfig;
+import net.lilfox.config.IConfigHotkey;
 import net.lilfox.hotkey.KeyBind;
 import net.lilfox.persist.ConfigSerializer;
+import net.lilfox.vanilla.VanillaKeybindProvider;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import org.jspecify.annotations.Nullable;
@@ -78,6 +80,43 @@ public final class LilConfigManager {
         return Collections.unmodifiableList(providers);
     }
 
+    /**
+     * Returns {@code true} if {@code kb} has a subset/superset conflict with any other
+     * registered {@link IConfigHotkey} entry across all providers' config groups.
+     *
+     * <p>Two bindings conflict when one's key set is a subset of or equal to the other's.
+     * Debug vanilla keys ({@link net.minecraft.client.KeyMapping.Category#DEBUG}) only
+     * conflict within the debug category, since they require F3 to be held.
+     *
+     * @param kb    the binding to check
+     * @param owner the config entry that owns {@code kb}; used to determine the conflict
+     *              domain (debug vs. regular). May be {@code null} to treat as non-debug.
+     * @return {@code true} if a conflict exists
+     */
+    public boolean isConflicting(KeyBind kb, @Nullable IConfigHotkey owner) {
+        if (kb.getKeys().isEmpty()) return false;
+        VanillaKeybindProvider vanilla = VanillaKeybindProvider.getInstance();
+        boolean ownerIsDebug = owner != null && vanilla.isDebugHotkey(owner);
+        int count = 0;
+        for (IConfigProvider provider : providers) {
+            for (ConfigGroup group : provider.getConfigGroups()) {
+                for (IConfig config : group.getConfigs()) {
+                    if (!(config instanceof IConfigHotkey hk)) continue;
+                    KeyBind other = hk.getKeyBind();
+                    if (other.getKeys().isEmpty()) continue;
+                    // Debug keys only conflict within the debug domain
+                    if (ownerIsDebug != vanilla.isDebugHotkey(hk)) continue;
+                    List<InputConstants.Key> ak = kb.getKeys();
+                    List<InputConstants.Key> bk = other.getKeys();
+                    if (bk.containsAll(ak) || ak.containsAll(bk)) {
+                        if (++count >= 2) return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     // -------------------------------------------------------------------------
     // Persistence
     // -------------------------------------------------------------------------
@@ -133,6 +172,19 @@ public final class LilConfigManager {
             active.add(new Entry(hb, bind, state));
         }
 
+        // Superset inhibition: suppress any binding whose keys are a proper subset
+        // of another currently fully-held binding (wasFullyHeld), regardless of
+        // whether that superset itself fired.
+        for (Entry e1 : active) {
+            if (!e1.state.pendingFire) continue;
+            for (Entry e2 : active) {
+                if (e2 == e1) continue;
+                if (e2.state.wasFullyHeld && isProperSubset(e1.bind, e2.bind)) {
+                    e1.state.pendingFire = false;
+                    break;
+                }
+            }
+        }
         for (Entry e : active) {
             if (e.state.pendingFire) e.hb.setValue(!e.hb.getValue());
         }
@@ -146,14 +198,32 @@ public final class LilConfigManager {
     public List<IConfigProvider> pollFiredMenuKeys() {
         long windowHandle = Minecraft.getInstance().getWindow().handle();
 
-        List<IConfigProvider> fired = new ArrayList<>();
+        record MenuEntry(IConfigProvider provider, KeyBind bind, GestureState state) {}
+        List<MenuEntry> active = new ArrayList<>();
+
         for (IConfigProvider provider : providers) {
             KeyBind menuKey = provider.getMenuOpenKey();
             if (menuKey == KeyBind.NONE || menuKey.getKeys().isEmpty()) continue;
-
             GestureState state = getOrCreateState(provider, menuKey.getKeys().size());
             tickGesture(state, menuKey, windowHandle);
-            if (state.pendingFire) fired.add(provider);
+            active.add(new MenuEntry(provider, menuKey, state));
+        }
+
+        // Superset inhibition (same rule as tickHotkeys)
+        for (MenuEntry e1 : active) {
+            if (!e1.state.pendingFire) continue;
+            for (MenuEntry e2 : active) {
+                if (e2 == e1) continue;
+                if (e2.state.wasFullyHeld && isProperSubset(e1.bind, e2.bind)) {
+                    e1.state.pendingFire = false;
+                    break;
+                }
+            }
+        }
+
+        List<IConfigProvider> fired = new ArrayList<>();
+        for (MenuEntry e : active) {
+            if (e.state.pendingFire) fired.add(e.provider);
         }
         return fired;
     }
@@ -239,6 +309,17 @@ public final class LilConfigManager {
 
         state.wasFullyHeld = fullyHeld;
         state.prevHeld = curr;
+    }
+
+    /**
+     * Returns {@code true} if every key in {@code sub} is also present in {@code sup},
+     * and {@code sup} has at least one additional key (i.e. strictly larger).
+     */
+    private static boolean isProperSubset(KeyBind sub, KeyBind sup) {
+        List<InputConstants.Key> subKeys = sub.getKeys();
+        List<InputConstants.Key> supKeys = sup.getKeys();
+        if (subKeys.size() >= supKeys.size()) return false;
+        return supKeys.containsAll(subKeys);
     }
 
 }

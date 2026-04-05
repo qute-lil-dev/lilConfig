@@ -26,18 +26,24 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ScreenRedirectMixin {
 
     /**
-     * If the incoming screen is a {@link KeyBindsScreen} and the vanilla
-     * keybind override is enabled, cancels the original call and opens
-     * {@link LilConfigScreen} backed by {@link VanillaKeybindProvider} instead.
+     * If the incoming screen is a {@link KeyBindsScreen} and the vanilla keybind override
+     * is enabled, decides which variant to use:
+     * <ul>
+     *   <li>Variant B ({@code vanilla_ui_embed=false}): cancels and opens a flat
+     *       {@link LilConfigScreen} via {@link VanillaKeybindProvider#asFlatProvider()}.</li>
+     *   <li>Variant C ({@code vanilla_ui_embed=true}): lets the original {@link KeyBindsScreen}
+     *       open; key input is intercepted by {@code KeyBindsScreenMixin}.</li>
+     * </ul>
      */
     @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
     private void lilconfig_redirectKeyBindsScreen(@Nullable Screen screen, CallbackInfo ci) {
         if (!(screen instanceof KeyBindsScreen)) return;
         if (!LilConfigOwnConfig.getInstance().getVanillaKeyOverride().getValue()) return;
+        if (LilConfigOwnConfig.getInstance().getVanillaUiEmbed().getValue()) return; // Variant C
         VanillaKeybindProvider p = VanillaKeybindProvider.getInstance();
         if (!p.isInitialized()) return;
         Screen parent = ((Minecraft) (Object) this).screen;
         ci.cancel();
-        ((Minecraft) (Object) this).setScreen(LilConfigScreen.create(parent, p));
+        ((Minecraft) (Object) this).setScreen(LilConfigScreen.create(parent, p.asFlatProvider()));
     }
 }

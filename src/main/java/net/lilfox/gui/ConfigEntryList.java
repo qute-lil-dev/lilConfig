@@ -11,6 +11,7 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import net.lilfox.config.*;
 import net.lilfox.hotkey.KeyBind;
+import net.lilfox.manager.LilConfigManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,13 +54,31 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
         this.owner = screen;
         this.centerListVertically = false;
         for (IConfig cfg : group.getConfigs()) {
-            addEntry(new ConfigRow(cfg, screen));
+            if (cfg.getType() == ConfigType.SEPARATOR) {
+                addEntry(new SeparatorRow(cfg, screen));
+            } else {
+                addEntry(new ConfigRow(cfg, screen));
+            }
         }
     }
 
     @Override
     public int getRowWidth() {
         return Math.min(owner.width - 50, 400);
+    }
+
+    /**
+     * Returns a styled component for a hotkey button label.
+     * Shows {@code "---"} for empty/NONE bindings.
+     * Applies {@link ChatFormatting#GOLD} when the binding conflicts with another
+     * registered hotkey (subset/superset overlap).
+     */
+    static Component keyLabel(KeyBind kb, IConfigHotkey owner) {
+        String s = kb.getKeys().isEmpty() ? "---" : kb.toDisplayString();
+        if (LilConfigManager.getInstance().isConflicting(kb, owner)) {
+            return Component.literal(s).withStyle(ChatFormatting.GOLD);
+        }
+        return Component.literal(s);
     }
 
     // -------------------------------------------------------------------------
@@ -69,9 +88,11 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
      */
     public static class ConfigRow extends ContainerObjectSelectionList.Entry<ConfigRow> {
 
-        private final IConfig config;
+        protected final IConfig config;
         private final LilConfigScreen screen;
         private final List<AbstractWidget> widgets = new ArrayList<>();
+        private Button resetButton;
+        private Button hotkeyButton;
 
         public ConfigRow(IConfig config, LilConfigScreen screen) {
             this.config = config;
@@ -92,23 +113,23 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                 case HOTKEYED_BOOLEAN -> {
                     IConfigHotkey  hk = (IConfigHotkey)  config;
                     IConfigBoolean b  = (IConfigBoolean) config;
-                    Button hotkeyBtn = Button.builder(keyLabel(hk.getKeyBind()),
+                    hotkeyButton = Button.builder(keyLabel(hk.getKeyBind(), hk),
                             btn -> screen.startRebind(hk, btn))
                             .tooltip(Tooltip.create(Component.translatable("lilconfig.tooltip.rebind")))
                             .size(HOTKEY_BTN_W, BTN_H).pos(0, 0).build();
                     Button toggleBtn = Button.builder(boolLabel(b.getValue()),
                             btn -> { b.setValue(!b.getValue()); btn.setMessage(boolLabel(b.getValue())); })
                             .size(TOGGLE_BTN_W, BTN_H).pos(0, 0).build();
-                    widgets.add(hotkeyBtn);
+                    widgets.add(hotkeyButton);
                     widgets.add(toggleBtn);
                 }
                 case HOTKEY -> {
                     IConfigHotkey hk = (IConfigHotkey) config;
-                    Button hotkeyBtn = Button.builder(keyLabel(hk.getKeyBind()),
+                    hotkeyButton = Button.builder(keyLabel(hk.getKeyBind(), hk),
                             btn -> screen.startRebind(hk, btn))
                             .tooltip(Tooltip.create(Component.translatable("lilconfig.tooltip.rebind")))
                             .size(WIDGET_ZONE, BTN_H).pos(0, 0).build();
-                    widgets.add(hotkeyBtn);
+                    widgets.add(hotkeyButton);
                 }
                 case INTEGER -> {
                     ConfigInteger ci = (ConfigInteger) config;
@@ -132,6 +153,7 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                     box.setResponder(cs::setValue);
                     widgets.add(box);
                 }
+                case SEPARATOR -> { return; }
             }
 
             // optional effect button
@@ -143,9 +165,10 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
             }
 
             // reset button
-            widgets.add(Button.builder(Component.translatable("lilconfig.reset"), btn -> resetRow())
+            Button resetBtn = Button.builder(Component.translatable("lilconfig.reset"), btn -> resetRow())
                     .tooltip(Tooltip.create(Component.translatable("lilconfig.tooltip.reset")))
-                    .size(RESET_BTN_W, BTN_H).pos(0, 0).build());
+                    .size(RESET_BTN_W, BTN_H).pos(0, 0).build();
+            widgets.add(resetButton = resetBtn);
         }
 
         /** Repositions all widgets based on the entry's current content bounds. */
@@ -166,6 +189,11 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
         @Override
         public void extractContent(GuiGraphicsExtractor gfx, int mouseX, int mouseY, boolean hovered, float partialTick) {
             repositionWidgets();
+            if (resetButton != null) resetButton.active = config.isModified();
+            if (hotkeyButton != null && !screen.isRebinding(config)) {
+                IConfigHotkey hk = (IConfigHotkey) config;
+                hotkeyButton.setMessage(keyLabel(hk.getKeyBind(), hk));
+            }
             // Draw config name using the entry's own content coordinates, not the mouse position
             int textY = getContentY() + (getContentHeight() - Minecraft.getInstance().font.lineHeight) / 2;
             gfx.text(Minecraft.getInstance().font, Component.translatable(config.getName()), getContentX(), textY, -1);
@@ -197,10 +225,29 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                 ? Component.translatable("options.on").withStyle(ChatFormatting.GREEN)
                 : Component.translatable("options.off").withStyle(ChatFormatting.RED);
         }
+    }
 
-        private static Component keyLabel(KeyBind kb) {
-            String s = kb.toDisplayString();
-            return Component.literal(s.isEmpty() ? "---" : s);
+    // -------------------------------------------------------------------------
+
+    /**
+     * A non-interactive row that renders a section header label.
+     * Used to separate groups of entries inside a flat list (e.g. vanilla key categories).
+     */
+    public static class SeparatorRow extends ConfigRow {
+
+        public SeparatorRow(IConfig config, LilConfigScreen screen) {
+            super(config, screen);
+        }
+
+        @Override
+        public void extractContent(GuiGraphicsExtractor gfx, int mouseX, int mouseY,
+                                   boolean hovered, float partialTick) {
+            int cx = (getContentX() + getContentRight()) / 2;
+            int cy = getContentY() + (getContentHeight() - Minecraft.getInstance().font.lineHeight) / 2;
+            gfx.centeredText(Minecraft.getInstance().font,
+                    Component.translatable(config.getName())
+                             .withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD),
+                    cx, cy, -1);
         }
     }
 }

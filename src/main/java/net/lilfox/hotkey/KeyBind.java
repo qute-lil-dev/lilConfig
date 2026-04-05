@@ -1,6 +1,7 @@
 package net.lilfox.hotkey;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import net.lilfox.hotkey.MouseButtonTracker;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
 
@@ -114,7 +115,12 @@ public final class KeyBind {
      */
     public static boolean isKeyHeld(InputConstants.Key key, long windowHandle) {
         if (key.getType() == InputConstants.Type.MOUSE) {
-            return GLFW.glfwGetMouseButton(windowHandle, key.getValue()) == GLFW.GLFW_PRESS;
+            int btn = key.getValue();
+            // Sticky per-tick tracker catches buttons that are quickly clicked and released
+            // before the tick poll runs. GLFW fallback handles buttons that may bypass the
+            // MouseHandlerMixin (e.g. LMB/RMB which have special fast-paths in onButton).
+            return MouseButtonTracker.isHeldOrPressedThisTick(btn)
+                    || GLFW.glfwGetMouseButton(windowHandle, btn) == GLFW.GLFW_PRESS;
         }
         return GLFW.glfwGetKey(windowHandle, key.getValue()) == GLFW.GLFW_PRESS;
     }

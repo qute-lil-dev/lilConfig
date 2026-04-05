@@ -4,6 +4,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.lilfox.gui.LilConfigScreen;
+import net.lilfox.hotkey.MouseButtonTracker;
 import net.lilfox.manager.IConfigProvider;
 import net.lilfox.manager.LilConfigManager;
 import net.lilfox.vanilla.VanillaKeybindProvider;
@@ -31,17 +32,26 @@ public class LilConfigClient implements ClientModInitializer {
                 client -> LilConfigManager.getInstance().saveAll());
 
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
-            if (client.level == null) return;
-            if (LilConfigOwnConfig.getInstance().getVanillaKeyOverride().getValue())
-                VanillaKeybindProvider.getInstance().tick();
-            LilConfigManager manager = LilConfigManager.getInstance();
-            if (client.screen == null) {
-                for (IConfigProvider provider : manager.pollFiredMenuKeys()) {
-                    LilConfigScreen.open(provider);
-                    return;
+            // Check hotkeys BEFORE clearing the sticky mouse-button window.
+            // GLFW mouse events are enqueued via Minecraft.execute() and processed
+            // before START_CLIENT_TICK fires, so pressedThisTick is already populated
+            // here. Clearing first would discard that data before it can be used.
+            try {
+                if (client.level == null) return;
+                if (LilConfigOwnConfig.getInstance().getVanillaKeyOverride().getValue())
+                    VanillaKeybindProvider.getInstance().tick();
+                LilConfigManager manager = LilConfigManager.getInstance();
+                if (client.screen == null) {
+                    for (IConfigProvider provider : manager.pollFiredMenuKeys()) {
+                        LilConfigScreen.open(provider);
+                        return;
+                    }
                 }
+                manager.tickHotkeys(client.screen);
+            } finally {
+                // Always clear after all checks, including on early return paths.
+                MouseButtonTracker.clearTickWindow();
             }
-            manager.tickHotkeys(client.screen);
         });
     }
 }

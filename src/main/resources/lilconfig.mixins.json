@@ -2,7 +2,14 @@
   "required": true,
   "minVersion": "0.8",
   "package": "net.lilfox.mixin",
-  "compatibilityLevel": "JAVA_21",
-  "client": ["KeyMappingMixin", "ScreenRedirectMixin"],
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+              "KeyMappingMixin",
+              "MouseHandlerMixin",
+              "ScreenRedirectMixin",
+              "KeyBindsEntryAccessor",
+              "KeyBindsScreenMixin",
+              "KeyBindsListMixin"
+            ],
   "injectors": { "defaultRequire": 1 }
 }

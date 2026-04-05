@@ -14,5 +14,7 @@ public enum ConfigType {
     /** An integer value with optional minimum and maximum bounds. */
     INTEGER,
     /** A free-form string value backed by a text field. */
-    STRING
+    STRING,
+    /** A non-interactive section divider label. No value, no widget, not serialised. */
+    SEPARATOR
 }

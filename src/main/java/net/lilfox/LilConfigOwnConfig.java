@@ -30,12 +30,20 @@ public final class LilConfigOwnConfig implements IConfigProvider {
     public static final ConfigBoolean VANILLA_KEY_OVERRIDE =
             new ConfigBoolean("vanilla_key_override", false);
 
+    /**
+     * When {@code true}, the vanilla {@code KeyBindsScreen} opens normally but
+     * key input is intercepted to accumulate multi-key combos (Variant C).
+     * When {@code false}, a flat {@link net.lilfox.gui.LilConfigScreen} is shown instead (Variant B).
+     */
+    public static final ConfigBoolean VANILLA_UI_EMBED =
+            new ConfigBoolean("vanilla_ui_embed", false);
+
     /** Hotkey that opens this config screen. */
     public static final ConfigHotkey MENU_KEY =
             new ConfigHotkey("menu_key", "LEFT_CONTROL, LEFT_SHIFT, L");
 
     private static final ConfigGroup SETTINGS = new ConfigGroup("settings",
-            List.of(VANILLA_KEY_OVERRIDE, MENU_KEY));
+            List.of(VANILLA_KEY_OVERRIDE, VANILLA_UI_EMBED, MENU_KEY));
 
     private static final ConfigGroup DEMO = new ConfigGroup("demo",
             List.of(DemoConfig.SHOW_HUD, DemoConfig.DEBUG_MODE, DemoConfig.MAX_ITEMS,
@@ -54,6 +62,14 @@ public final class LilConfigOwnConfig implements IConfigProvider {
      */
     public ConfigBoolean getVanillaKeyOverride() {
         return VANILLA_KEY_OVERRIDE;
+    }
+
+    /**
+     * Returns the {@link #VANILLA_UI_EMBED} config entry.
+     * Used by the screen redirect mixin to select Variant B or C.
+     */
+    public ConfigBoolean getVanillaUiEmbed() {
+        return VANILLA_UI_EMBED;
     }
 
     @Override
