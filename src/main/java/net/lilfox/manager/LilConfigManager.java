@@ -88,18 +88,25 @@ public final class LilConfigManager {
      * registered {@link IConfigHotkey} entry across all providers' config groups.
      *
      * <p>Two bindings conflict when one's key set is a subset of or equal to the other's.
-     * Debug vanilla keys ({@link net.minecraft.client.KeyMapping.Category#DEBUG}) only
-     * conflict within the debug category, since they require F3 to be held.
+     * Conflict domains are isolated: debug vanilla keys only conflict within
+     * {@link net.minecraft.client.KeyMapping.Category#DEBUG}, and spectator vanilla keys
+     * only within {@link net.minecraft.client.KeyMapping.Category#SPECTATOR}, since both
+     * groups are active only under specific conditions.
+     *
+     * <p>When both the owner and the candidate are vanilla keys still at their default values,
+     * no conflict is reported. Vanilla intentionally ships duplicate defaults (e.g.
+     * {@code key.debug.overlay} and {@code key.debug.modifier} are both F3 by default).
      *
      * @param kb    the binding to check
      * @param owner the config entry that owns {@code kb}; used to determine the conflict
-     *              domain (debug vs. regular). May be {@code null} to treat as non-debug.
+     *              domain. May be {@code null} to treat as a non-categorised entry.
      * @return {@code true} if a conflict exists
      */
     public boolean isConflicting(KeyBind kb, @Nullable IConfigHotkey owner) {
         if (kb.getKeys().isEmpty()) return false;
         VanillaKeybindProvider vanilla = VanillaKeybindProvider.getInstance();
         boolean ownerIsDebug = owner != null && vanilla.isDebugHotkey(owner);
+        boolean ownerIsSpectator = owner != null && vanilla.isSpectatorHotkey(owner);
         int count = 0;
         for (IConfigProvider provider : providers) {
             for (ConfigGroup group : provider.getConfigGroups()) {
@@ -107,8 +114,12 @@ public final class LilConfigManager {
                     if (!(config instanceof IConfigHotkey hk)) continue;
                     KeyBind other = hk.getKeyBind();
                     if (other.getKeys().isEmpty()) continue;
-                    // Debug keys only conflict within the debug domain
                     if (ownerIsDebug != vanilla.isDebugHotkey(hk)) continue;
+                    if (ownerIsSpectator != vanilla.isSpectatorHotkey(hk)) continue;
+                    // Vanilla intentional duplicates: skip when both are vanilla keys at defaults.
+                    if (vanilla.isVanillaHotkey(hk)
+                            && owner != null && !owner.isModified()
+                            && !hk.isModified()) continue;
                     List<InputConstants.Key> ak = kb.getKeys();
                     List<InputConstants.Key> bk = other.getKeys();
                     if (bk.containsAll(ak) || ak.containsAll(bk)) {

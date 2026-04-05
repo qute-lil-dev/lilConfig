@@ -246,12 +246,46 @@ public final class VanillaKeybindProvider implements IConfigProvider {
     }
 
     /**
+     * Returns {@code true} if {@code hk} belongs to the vanilla spectator key category
+     * ({@link net.minecraft.client.KeyMapping.Category#SPECTATOR}).
+     * Spectator keys are only active in spectator mode, so they only conflict within
+     * their own category.
+     *
+     * @param hk the config hotkey to test
+     * @return {@code true} if the underlying {@link KeyMapping} is in the spectator category
+     */
+    public boolean isSpectatorHotkey(IConfigHotkey hk) {
+        ensureInitialized();
+        KeyMapping km = reverseKeyMap.get(hk);
+        return km != null && km.getCategory() == KeyMapping.Category.SPECTATOR;
+    }
+
+    /**
+     * Returns {@code true} if {@code hk} is a vanilla key managed by this provider.
+     * Used to apply vanilla-specific conflict rules (e.g. skip conflict when both
+     * keys are at their default values, since vanilla intentionally ships duplicate
+     * defaults such as {@code key.debug.overlay} and {@code key.debug.modifier}).
+     *
+     * @param hk the config hotkey to test
+     * @return {@code true} if {@code hk} wraps a vanilla {@link KeyMapping}
+     */
+    public boolean isVanillaHotkey(IConfigHotkey hk) {
+        return reverseKeyMap.containsKey(hk);
+    }
+
+    /**
      * Returns {@code true} if the override combo for {@code km} has a subset/superset conflict
      * with any other non-empty override combo in the key map.
      *
      * <p>Two combos conflict when one's key set is a subset of or equal to the other's.
-     * Debug keys ({@link net.minecraft.client.KeyMapping.Category#DEBUG}) only conflict
-     * with other debug keys, since they require F3 to be held.
+     * Conflict domains are isolated: debug keys only conflict within
+     * {@link net.minecraft.client.KeyMapping.Category#DEBUG}, and spectator keys only within
+     * {@link net.minecraft.client.KeyMapping.Category#SPECTATOR}, since both groups are
+     * active only under specific conditions (F3 held / spectator mode).
+     *
+     * <p>No conflict is reported when both combos are still at their default values.
+     * Vanilla intentionally ships duplicate defaults (e.g. {@code key.debug.overlay} and
+     * {@code key.debug.modifier} are both F3), so showing a conflict there would be misleading.
      *
      * @param km the vanilla key mapping to check
      * @return {@code true} if a conflict exists
@@ -263,12 +297,17 @@ public final class VanillaKeybindProvider implements IConfigProvider {
         KeyBind targetBind = target.getKeyBind();
         if (targetBind.getKeys().isEmpty()) return false;
         boolean targetIsDebug = km.getCategory() == KeyMapping.Category.DEBUG;
+        boolean targetIsSpectator = km.getCategory() == KeyMapping.Category.SPECTATOR;
         for (Map.Entry<KeyMapping, ConfigHotkey> entry : keyMap.entrySet()) {
             if (entry.getKey() == km) continue;
             KeyBind other = entry.getValue().getKeyBind();
             if (other.getKeys().isEmpty()) continue;
-            // Debug keys only conflict within the debug category
-            if ((entry.getKey().getCategory() == KeyMapping.Category.DEBUG) != targetIsDebug) continue;
+            boolean entryIsDebug = entry.getKey().getCategory() == KeyMapping.Category.DEBUG;
+            boolean entryIsSpectator = entry.getKey().getCategory() == KeyMapping.Category.SPECTATOR;
+            if (entryIsDebug != targetIsDebug || entryIsSpectator != targetIsSpectator) continue;
+            // Vanilla ships intentional duplicate defaults (e.g. debug overlay and modifier are
+            // both F3); skip conflict when both overrides are still at their default values.
+            if (!target.isModified() && !entry.getValue().isModified()) continue;
             List<InputConstants.Key> ak = targetBind.getKeys();
             List<InputConstants.Key> bk = other.getKeys();
             if (bk.containsAll(ak) || ak.containsAll(bk)) return true;
