@@ -4,7 +4,9 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.lilfox.LilConfigOwnConfig;
 import net.lilfox.hotkey.KeyBind;
 import net.lilfox.vanilla.VanillaKeybindProvider;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.screens.options.controls.KeyBindsList;
+import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -39,14 +41,18 @@ public class KeyBindsListMixin {
         VanillaKeybindProvider provider = VanillaKeybindProvider.getInstance();
         if (!provider.isInitialized()) return;
         KeyBindsList self = (KeyBindsList) (Object) this;
+        KeyBindsScreen screen = ((KeyBindsListAccessor) self).getKeyBindsScreen();
+        KeyMapping selectedKey = screen != null ? screen.selectedKey : null;
         for (KeyBindsList.Entry entry : self.children()) {
             if (!(entry instanceof KeyBindsEntryAccessor accessor)) continue;
+            // Vanilla shows its own editing indicator ("> KEY <" in yellow) via refreshEntry()
+            // when selectedKey == this entry's key; skip it so we don't overwrite that label.
+            if (accessor.getKey() == selectedKey) continue;
             KeyBind combo = provider.getComboForMapping(accessor.getKey());
-            String label = combo.getKeys().isEmpty() ? "---" : combo.toDisplayString();
-            accessor.getChangeButton().setMessage(Component.literal(label));
-            boolean hasConflict = !combo.getKeys().isEmpty()
-                    && provider.hasConflictForMapping(accessor.getKey());
-            accessor.setHasCollision(hasConflict);
+            // No override set — let vanilla's refreshEntry() label (e.g. "None") stand as-is.
+            if (combo.getKeys().isEmpty()) continue;
+            accessor.getChangeButton().setMessage(Component.literal(combo.toDisplayString()));
+            accessor.setHasCollision(provider.hasConflictForMapping(accessor.getKey()));
             InputConstants.Key defaultKey = accessor.getKey().getDefaultKey();
             KeyBind defaultBind = defaultKey.equals(InputConstants.UNKNOWN)
                     ? KeyBind.NONE

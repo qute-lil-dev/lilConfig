@@ -8,6 +8,7 @@
               "MouseHandlerMixin",
               "ScreenRedirectMixin",
               "KeyBindsEntryAccessor",
+              "KeyBindsListAccessor",
               "KeyBindsScreenMixin",
               "KeyBindsListMixin"
             ],
