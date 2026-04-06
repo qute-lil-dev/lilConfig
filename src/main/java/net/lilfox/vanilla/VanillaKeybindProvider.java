@@ -16,6 +16,7 @@ import net.minecraft.network.chat.contents.TranslatableContents;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -75,7 +76,8 @@ public final class VanillaKeybindProvider implements IConfigProvider {
     private synchronized void ensureInitialized() {
         if (initialized) return;
 
-        KeyMapping[] keyMappings = Minecraft.getInstance().options.keyMappings;
+        KeyMapping[] keyMappings = Minecraft.getInstance().options.keyMappings.clone();
+        Arrays.sort(keyMappings);
         Map<KeyMapping.Category, List<IConfig>> byCategory = new LinkedHashMap<>();
 
         for (KeyMapping km : keyMappings) {

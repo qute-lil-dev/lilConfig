@@ -107,24 +107,24 @@ public final class LilConfigManager {
         VanillaKeybindProvider vanilla = VanillaKeybindProvider.getInstance();
         boolean ownerIsDebug = owner != null && vanilla.isDebugHotkey(owner);
         boolean ownerIsSpectator = owner != null && vanilla.isSpectatorHotkey(owner);
-        int count = 0;
         for (IConfigProvider provider : providers) {
             for (ConfigGroup group : provider.getConfigGroups()) {
                 for (IConfig config : group.getConfigs()) {
                     if (!(config instanceof IConfigHotkey hk)) continue;
+                    if (hk == owner) continue;
                     KeyBind other = hk.getKeyBind();
                     if (other.getKeys().isEmpty()) continue;
                     if (ownerIsDebug != vanilla.isDebugHotkey(hk)) continue;
                     if (ownerIsSpectator != vanilla.isSpectatorHotkey(hk)) continue;
-                    // Vanilla intentional duplicates: skip when both are vanilla keys at defaults.
-                    if (vanilla.isVanillaHotkey(hk)
-                            && owner != null && !owner.isModified()
+                    // Vanilla intentional duplicates: skip when both vanilla keys are still at defaults.
+                    if (owner != null
+                            && vanilla.isVanillaHotkey(owner)
+                            && vanilla.isVanillaHotkey(hk)
+                            && !owner.isModified()
                             && !hk.isModified()) continue;
                     List<InputConstants.Key> ak = kb.getKeys();
                     List<InputConstants.Key> bk = other.getKeys();
-                    if (bk.containsAll(ak) || ak.containsAll(bk)) {
-                        if (++count >= 2) return true;
-                    }
+                    if (bk.containsAll(ak) || ak.containsAll(bk)) return true;
                 }
             }
         }
