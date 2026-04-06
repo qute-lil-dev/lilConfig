@@ -1,5 +1,7 @@
 package net.lilfox.manager;
 
+import net.fabricmc.loader.api.FabricLoader;
+import net.lilfox.annotation.DevTab;
 import net.lilfox.annotation.Hotkeyed;
 import net.lilfox.annotation.LilConfigMod;
 import net.lilfox.annotation.MenuKey;
@@ -62,6 +64,8 @@ final class AnnotationConfigScanner {
         String modId       = meta.modId();
         String displayName = meta.displayName().isBlank() ? modId : meta.displayName();
 
+        boolean isDev = FabricLoader.getInstance().isDevelopmentEnvironment();
+
         // Ordered map: tab id → ordered map (section bucket → entry list).
         // LinkedHashMap preserves first-occurrence ordering for both tabs and sections.
         Map<String, Map<String, List<IConfig>>> tabMap = new LinkedHashMap<>();
@@ -69,10 +73,12 @@ final class AnnotationConfigScanner {
         // The ConfigHotkey field annotated with @MenuKey, if any.
         @Nullable IConfigHotkey menuKeyEntry = null;
 
-        // First pass: determine whether ANY field carries @Tab
+        // First pass: determine whether ANY field carries @Tab (or @DevTab in dev)
         boolean anyTab = false;
         for (Field f : configClass.getDeclaredFields()) {
-            if (isConfigField(f) && f.getAnnotation(Tab.class) != null) {
+            if (!isConfigField(f)) continue;
+            if (f.getAnnotation(Tab.class) != null
+                    || (isDev && f.getAnnotation(DevTab.class) != null)) {
                 anyTab = true;
                 break;
             }
@@ -81,6 +87,8 @@ final class AnnotationConfigScanner {
         // Second pass: collect entries
         for (Field f : configClass.getDeclaredFields()) {
             if (!isConfigField(f)) continue;
+            // @DevTab fields are invisible in production
+            if (!isDev && f.getAnnotation(DevTab.class) != null) continue;
             f.setAccessible(true);
 
             IConfig config = readField(f);
@@ -99,10 +107,13 @@ final class AnnotationConfigScanner {
             }
 
             // Resolve tab and section
-            @Nullable Tab     tabAnn = f.getAnnotation(Tab.class);
-            @Nullable Section secAnn = f.getAnnotation(Section.class);
+            @Nullable Tab     tabAnn    = f.getAnnotation(Tab.class);
+            @Nullable DevTab  devTabAnn = f.getAnnotation(DevTab.class);
+            @Nullable Section secAnn    = f.getAnnotation(Section.class);
 
-            String tabId  = (tabAnn != null) ? tabAnn.value() : (anyTab ? MISC : modId);
+            String tabId = (tabAnn != null)    ? tabAnn.value()
+                         : (devTabAnn != null)  ? devTabAnn.value()
+                         : (anyTab              ? MISC : modId);
             @Nullable String secId = (secAnn != null) ? secAnn.value() : null;
 
             Map<String, List<IConfig>> sections =

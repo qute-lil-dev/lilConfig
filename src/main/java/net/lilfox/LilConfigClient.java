@@ -3,7 +3,6 @@ package net.lilfox;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.lilfox.demo.DemoConfig;
 import net.lilfox.gui.LilConfigScreen;
 import net.lilfox.hotkey.MouseButtonTracker;
 import net.lilfox.manager.IConfigProvider;
@@ -26,7 +25,6 @@ public class LilConfigClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         LilConfigManager.getInstance().register(LilConfigOwnConfig.class);
-        LilConfigManager.getInstance().register(DemoConfig.class);
         ClientLifecycleEvents.CLIENT_STARTED.register(client ->
                 LilConfigManager.getInstance().register(VanillaKeybindProvider.getInstance()));
 
