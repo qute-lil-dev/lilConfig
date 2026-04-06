@@ -11,6 +11,16 @@ import com.google.gson.JsonPrimitive;
 public class ConfigString extends ConfigBase<String> {
 
     /**
+     * Creates a string config entry whose name will be injected by the annotation scanner.
+     *
+     * @param defaultValue the default value
+     * @return a new unnamed entry
+     */
+    public static ConfigString of(String defaultValue) {
+        return new ConfigString("", defaultValue);
+    }
+
+    /**
      * Creates a new string config entry.
      *
      * @param name         the unique name used as JSON key and i18n base key

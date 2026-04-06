@@ -3,6 +3,8 @@ package net.lilfox.config;
 import net.lilfox.hotkey.HotkeyContext;
 import net.lilfox.hotkey.IHotkeyCallback;
 import net.lilfox.hotkey.KeyBind;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -31,6 +33,21 @@ public interface IConfigHotkey extends IConfig {
      * Returns the context in which this hotkey is active.
      */
     default HotkeyContext getHotkeyContext() { return HotkeyContext.IN_GAME; }
+
+    /**
+     * Returns {@code true} if the full key combination is currently held and the hotkey
+     * context matches the current game state.
+     */
+    default boolean isHeld() {
+        Screen s = Minecraft.getInstance().screen;
+        boolean inGame = (s == null);
+        boolean contextMatch = switch (getHotkeyContext()) {
+            case IN_GAME  -> inGame;
+            case GUI_OPEN -> !inGame;
+            case ALWAYS   -> true;
+        };
+        return contextMatch && getKeyBind().isPressed();
+    }
 
     /**
      * Returns the callback to invoke when this hotkey fires, or {@code null} if none.

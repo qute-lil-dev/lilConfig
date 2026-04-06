@@ -6,16 +6,23 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Base interface for all lilConfig configuration entries.
  *
- * <p>Each entry has a unique {@link #getName() name} used as both the JSON key
- * and the i18n base translation key. Implementations must support JSON
- * round-trips and reset-to-default semantics.
+ * <p>Each entry has a unique {@link #getName() name} used as the JSON key.
+ * The owning mod's id ({@link #getModId()}) is set by the annotation scanner
+ * and is used as the i18n key prefix: {@code modId + "." + name}.
+ * Implementations must support JSON round-trips and reset-to-default semantics.
  */
 public interface IConfig {
 
     /**
-     * Returns the entry name used as the JSON key and i18n base translation key.
+     * Returns the entry name used as the JSON key.
      */
     String getName();
+
+    /**
+     * Returns the mod ID that owns this entry, or an empty string if not yet registered.
+     * Used as the prefix for i18n translation keys ({@code modId + "." + name}).
+     */
+    String getModId();
 
     /**
      * Returns the type of this entry; used by the GUI to select the appropriate widget.

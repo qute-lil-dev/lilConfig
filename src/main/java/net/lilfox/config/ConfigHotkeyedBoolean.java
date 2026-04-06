@@ -14,17 +14,48 @@ import org.jspecify.annotations.Nullable;
  * Both the boolean value and the key binding are managed and reset independently;
  * {@link #isModified()} returns {@code true} if either differs from its default.
  *
+ * <p>This class extends {@link ConfigBoolean} so that fields declared as
+ * {@code ConfigBoolean} can hold a {@code ConfigHotkeyedBoolean} instance when
+ * the {@link net.lilfox.annotation.Hotkeyed} annotation is used. In that case
+ * only the boolean value is accessible from the field type; the hotkey is an
+ * implementation detail managed by the GUI.
+ *
  * <p>JSON representation: an object with {@code "value"} (boolean) and
  * {@code "key"} (save string) fields. A plain boolean primitive is also accepted
  * for backwards compatibility (key binding is left at its current value).
  */
-public class ConfigHotkeyedBoolean extends ConfigBase<Boolean>
-        implements IConfigBoolean, IConfigHotkey {
+public class ConfigHotkeyedBoolean extends ConfigBoolean implements IConfigHotkey {
 
     private KeyBind keyBind;
     private final KeyBind defaultKeyBind;
     private HotkeyContext hotkeyContext = HotkeyContext.IN_GAME;
     private @Nullable IHotkeyCallback callback;
+
+    /**
+     * Creates a hotkeyed boolean config entry whose name will be injected by
+     * the annotation scanner. The key is supplied via the
+     * {@link net.lilfox.annotation.Hotkeyed} annotation.
+     *
+     * @param defaultValue   the default boolean value
+     * @param defaultKeyBind the default key binding
+     * @return a new unnamed entry
+     */
+    public static ConfigHotkeyedBoolean of(boolean defaultValue, KeyBind defaultKeyBind) {
+        return new ConfigHotkeyedBoolean("", defaultValue, defaultKeyBind);
+    }
+
+    /**
+     * Creates a hotkeyed boolean config entry whose name will be injected by
+     * the annotation scanner.
+     *
+     * @param defaultValue the default boolean value
+     * @param keyNames     comma-separated GLFW key names, e.g. {@code "LEFT_CONTROL, O"};
+     *                     empty string means unbound
+     * @return a new unnamed entry
+     */
+    public static ConfigHotkeyedBoolean of(boolean defaultValue, String keyNames) {
+        return new ConfigHotkeyedBoolean("", defaultValue, keyNames.isBlank() ? KeyBind.NONE : KeyBind.parse(keyNames));
+    }
 
     /**
      * Creates a new hotkeyed boolean config entry.
@@ -55,25 +86,6 @@ public class ConfigHotkeyedBoolean extends ConfigBase<Boolean>
     @Override
     public ConfigType getType() {
         return ConfigType.HOTKEYED_BOOLEAN;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean getValue() {
-        return value;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void setValue(boolean value) {
-        this.value = value;
-        notifyChanged();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean getDefaultValue() {
-        return defaultValue;
     }
 
     /** {@inheritDoc} */
@@ -174,6 +186,7 @@ public class ConfigHotkeyedBoolean extends ConfigBase<Boolean>
      *
      * @return this {@code ConfigHotkeyedBoolean} for fluent chaining
      */
+    @Override
     public ConfigHotkeyedBoolean withOnChange(Runnable listener) {
         super.withOnChange(listener);
         return this;

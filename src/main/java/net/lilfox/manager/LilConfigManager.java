@@ -57,6 +57,20 @@ public final class LilConfigManager {
     // -------------------------------------------------------------------------
 
     /**
+     * Scans {@code configClass} (annotated with
+     * {@link net.lilfox.annotation.LilConfigMod}) and registers the resulting
+     * provider. Equivalent to calling
+     * {@link #register(IConfigProvider) register(AnnotationConfigScanner.scan(configClass))}.
+     *
+     * @param configClass the config holder class annotated with {@code @LilConfigMod}
+     * @throws IllegalArgumentException if the class lacks the annotation or a provider
+     *                                  with the same mod ID is already registered
+     */
+    public void register(Class<?> configClass) {
+        register(AnnotationConfigScanner.scan(configClass));
+    }
+
+    /**
      * Registers a config provider and immediately loads its persisted values
      * from disk via {@link ConfigSerializer#load(IConfigProvider)}.
      *

@@ -3,6 +3,7 @@ package net.lilfox;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.lilfox.demo.DemoConfig;
 import net.lilfox.gui.LilConfigScreen;
 import net.lilfox.hotkey.MouseButtonTracker;
 import net.lilfox.manager.IConfigProvider;
@@ -24,7 +25,8 @@ public class LilConfigClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        LilConfigManager.getInstance().register(LilConfigOwnConfig.getInstance());
+        LilConfigManager.getInstance().register(LilConfigOwnConfig.class);
+        LilConfigManager.getInstance().register(DemoConfig.class);
         ClientLifecycleEvents.CLIENT_STARTED.register(client ->
                 LilConfigManager.getInstance().register(VanillaKeybindProvider.getInstance()));
 
@@ -38,7 +40,7 @@ public class LilConfigClient implements ClientModInitializer {
             // here. Clearing first would discard that data before it can be used.
             try {
                 if (client.level == null) return;
-                if (LilConfigOwnConfig.getInstance().getVanillaKeyOverride().getValue())
+                if (LilConfigOwnConfig.VANILLA_KEY_OVERRIDE.getValue())
                     VanillaKeybindProvider.getInstance().tick();
                 LilConfigManager manager = LilConfigManager.getInstance();
                 if (client.screen == null) {

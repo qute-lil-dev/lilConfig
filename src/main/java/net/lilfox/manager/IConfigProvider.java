@@ -6,27 +6,24 @@ import net.lilfox.hotkey.KeyBind;
 import java.util.List;
 
 /**
- * Contract that a mod must implement to register its configuration with lilConfig.
+ * Internal contract used by lilConfig to represent a registered config provider.
  *
- * <p>Implement this interface and call
- * {@link LilConfigManager#register(IConfigProvider)} from your
- * {@code ClientModInitializer} to integrate with the library.
- *
- * <p>Minimal implementation example:
+ * <p><b>Mod authors should not implement this interface directly.</b>
+ * Use the annotation-based API instead:
  * <pre>{@code
- * public class MyModConfig implements IConfigProvider {
- *     public static final ConfigBoolean ENABLED =
- *         new ConfigBoolean("enabled", true);
- *
- *     private static final ConfigGroup GENERAL =
- *         new ConfigGroup("general", List.of(ENABLED));
- *
- *     public String getModId()          { return "mymod"; }
- *     public String getDisplayName()    { return "My Mod"; }
- *     public List<ConfigGroup> getConfigGroups() { return List.of(GENERAL); }
- *     public KeyBind getMenuOpenKey()   { return KeyBind.NONE; }
+ * @LilConfigMod(modId = "mymod")
+ * public class MyModConfig {
+ *     @Tab("general")
+ *     public static ConfigBoolean ENABLED = ConfigBoolean.of(true);
  * }
+ *
+ * // In ClientModInitializer:
+ * LilConfigManager.getInstance().register(MyModConfig.class);
  * }</pre>
+ *
+ * <p>This interface remains public only because internal classes in sibling packages
+ * (e.g. {@code net.lilfox.vanilla}, {@code net.lilfox}) still need to reference it.
+ * It may become package-private in a future release.
  */
 public interface IConfigProvider {
 

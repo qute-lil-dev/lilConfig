@@ -29,7 +29,7 @@ public abstract class KeyMappingMixin {
      */
     @Inject(method = "isDown", at = @At("RETURN"), cancellable = true)
     private void lilconfig_isDown(CallbackInfoReturnable<Boolean> cir) {
-        if (!LilConfigOwnConfig.getInstance().getVanillaKeyOverride().getValue()) return;
+        if (!LilConfigOwnConfig.VANILLA_KEY_OVERRIDE.getValue()) return;
         VanillaKeybindProvider p = VanillaKeybindProvider.getInstance();
         if (!p.isInitialized()) return;
         KeyBind override = p.getComboForMapping((KeyMapping) (Object) this);
@@ -44,7 +44,7 @@ public abstract class KeyMappingMixin {
      */
     @Inject(method = "setKey", at = @At("RETURN"))
     private void lilconfig_setKey(InputConstants.Key key, CallbackInfo ci) {
-        if (!LilConfigOwnConfig.getInstance().getVanillaKeyOverride().getValue()) return;
+        if (!LilConfigOwnConfig.VANILLA_KEY_OVERRIDE.getValue()) return;
         VanillaKeybindProvider p = VanillaKeybindProvider.getInstance();
         if (!p.isInitialized()) return;
         KeyBind newBind = key.equals(InputConstants.UNKNOWN) ? KeyBind.NONE : KeyBind.of(key);
@@ -57,7 +57,7 @@ public abstract class KeyMappingMixin {
      */
     @Inject(method = "consumeClick", at = @At("RETURN"), cancellable = true)
     private void lilconfig_consumeClick(CallbackInfoReturnable<Boolean> cir) {
-        if (!LilConfigOwnConfig.getInstance().getVanillaKeyOverride().getValue()) return;
+        if (!LilConfigOwnConfig.VANILLA_KEY_OVERRIDE.getValue()) return;
         VanillaKeybindProvider p = VanillaKeybindProvider.getInstance();
         if (!p.isInitialized()) return;
         KeyBind override = p.getComboForMapping((KeyMapping) (Object) this);

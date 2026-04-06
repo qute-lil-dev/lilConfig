@@ -12,6 +12,7 @@ import net.minecraft.network.chat.Component;
 import net.lilfox.config.*;
 import net.lilfox.hotkey.KeyBind;
 import net.lilfox.manager.LilConfigManager;
+import net.lilfox.util.I18nHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -105,10 +106,12 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
             switch (config.getType()) {
                 case BOOLEAN -> {
                     IConfigBoolean b = (IConfigBoolean) config;
-                    Button toggle = Button.builder(boolLabel(b.getValue()),
+                    Button.Builder tb = Button.builder(boolLabel(b.getValue()),
                             btn -> { b.setValue(!b.getValue()); btn.setMessage(boolLabel(b.getValue())); })
-                            .size(WIDGET_ZONE, BTN_H).pos(0, 0).build();
-                    widgets.add(toggle);
+                            .size(WIDGET_ZONE, BTN_H).pos(0, 0);
+                    Component descTip = I18nHelper.desc(config);
+                    if (descTip != null) tb.tooltip(Tooltip.create(descTip));
+                    widgets.add(tb.build());
                 }
                 case HOTKEYED_BOOLEAN -> {
                     IConfigHotkey  hk = (IConfigHotkey)  config;
@@ -148,18 +151,22 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                     ConfigString cs = (ConfigString) config;
                     EditBox box = new EditBox(Minecraft.getInstance().font,
                             0, 0, WIDGET_ZONE, BTN_H,
-                            Component.literal(cs.getName()));
+                            I18nHelper.label(config));
                     box.setValue(cs.getValue());
                     box.setResponder(cs::setValue);
+                    Component descTip = I18nHelper.desc(config);
+                    if (descTip != null) box.setTooltip(Tooltip.create(descTip));
                     widgets.add(box);
                 }
                 case OPTION_LIST -> {
                     IConfigOptionList<?> cfg = (IConfigOptionList<?>) config;
-                    Button btn = Button.builder(
+                    Button.Builder ob = Button.builder(
                                     optionLabel(cfg),
                                     b -> { cfg.cycle(); b.setMessage(optionLabel(cfg)); })
-                            .size(WIDGET_ZONE, BTN_H).pos(0, 0).build();
-                    widgets.add(btn);
+                            .size(WIDGET_ZONE, BTN_H).pos(0, 0);
+                    Component descTip = I18nHelper.desc(config);
+                    if (descTip != null) ob.tooltip(Tooltip.create(descTip));
+                    widgets.add(ob.build());
                 }
                 case DOUBLE -> {
                     ConfigDouble cd = (ConfigDouble) config;
@@ -219,7 +226,7 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
             }
             // Draw config name using the entry's own content coordinates, not the mouse position
             int textY = getContentY() + (getContentHeight() - Minecraft.getInstance().font.lineHeight) / 2;
-            gfx.text(Minecraft.getInstance().font, Component.translatable(config.getName()), getContentX(), textY, -1);
+            gfx.text(Minecraft.getInstance().font, I18nHelper.label(config), getContentX(), textY, -1);
             for (AbstractWidget w : widgets) {
                 w.extractRenderState(gfx, mouseX, mouseY, partialTick);
             }

@@ -16,7 +16,8 @@ import java.util.Objects;
  */
 public abstract class ConfigBase<T> implements IConfig {
 
-    private final String name;
+    private String name;
+    private String modId = "";
 
     /** The immutable default value; used for reset and modification detection. */
     protected final T defaultValue;
@@ -46,6 +47,32 @@ public abstract class ConfigBase<T> implements IConfig {
     @Override
     public String getName() {
         return name;
+    }
+
+    /**
+     * Sets the name of this entry. Called by the annotation scanner to inject
+     * the field name; not intended for direct use in mod code.
+     *
+     * @param name the new name (snake_case JSON key)
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getModId() {
+        return modId;
+    }
+
+    /**
+     * Sets the owning mod ID. Called by the annotation scanner; not intended
+     * for direct use in mod code.
+     *
+     * @param modId the mod ID
+     */
+    public void setModId(String modId) {
+        this.modId = modId;
     }
 
     /** {@inheritDoc} */

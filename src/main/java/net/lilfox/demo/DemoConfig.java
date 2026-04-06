@@ -1,45 +1,77 @@
 package net.lilfox.demo;
 
-import net.lilfox.config.ConfigBoolean;
-import net.lilfox.config.ConfigDouble;
-import net.lilfox.config.ConfigHotkey;
-import net.lilfox.config.ConfigHotkeyedBoolean;
-import net.lilfox.config.ConfigInteger;
-import net.lilfox.config.ConfigOptionList;
-import net.lilfox.config.ConfigSeparator;
-import net.lilfox.config.ConfigString;
+import net.lilfox.annotation.Hotkeyed;
+import net.lilfox.annotation.LilConfigMod;
+import net.lilfox.annotation.MenuKey;
+import net.lilfox.annotation.Section;
+import net.lilfox.annotation.Tab;
+import net.lilfox.config.*;
 
 /**
- * Static field holder for demo config entries; referenced by
- * {@code LilConfigOwnConfig}'s demo group.
+ * Demo config that showcases all widget types available in lilConfig.
  *
- * <p>Contains one entry per {@link net.lilfox.config.ConfigType} to serve as
- * a live showcase of every widget the library can render.
+ * <p>Demonstrates the annotation-based API:
+ * <ul>
+ *   <li>{@link LilConfigMod} on the class — registers mod ID and display name.</li>
+ *   <li>{@link Tab} on each field — assigns it to a named GUI tab.</li>
+ *   <li>{@link Section} on a field — inserts a section header for that group.</li>
+ *   <li>{@link Hotkeyed} on a {@link ConfigBoolean} — adds a hotkey toggle; only
+ *       the boolean value is accessible from the field type.</li>
+ *   <li>{@link MenuKey} on a {@link ConfigHotkey} — designates the screen open key.</li>
+ *   <li>Factory methods ({@code ConfigBoolean.of(...)}, etc.) — entry names are
+ *       inferred from field names at registration time.</li>
+ * </ul>
+ *
+ * <p>Register from {@code ClientModInitializer}:
+ * <pre>{@code
+ * LilConfigManager.getInstance().register(DemoConfig.class);
+ * }</pre>
  */
+@LilConfigMod(modId = "lilconfig_demo", displayName = "lilConfig Demo")
 public final class DemoConfig {
 
     /** Render quality preset options. */
     public enum Quality { LOW, MEDIUM, HIGH, ULTRA }
 
-    // --- basic ---
-    public static final ConfigBoolean         SHOW_HUD      = new ConfigBoolean("show_hud", true);
-    public static final ConfigBoolean         DEBUG_MODE    = new ConfigBoolean("debug_mode", false);
+    // ---- Tab: general ----
 
-    // --- numeric / option ---
-    public static final ConfigSeparator       SEP_VALUES    = new ConfigSeparator("demo.separator.values");
-    public static final ConfigInteger         MAX_ITEMS     = new ConfigInteger("max_items", 64, 1, 256);
-    public static final ConfigDouble          RENDER_SCALE  = new ConfigDouble("render_scale", 1.0, 0.1, 4.0);
-    public static final ConfigOptionList<Quality> QUALITY   = new ConfigOptionList<>("quality", Quality.MEDIUM);
+    @Tab("general")
+    @Section("display")
+    public static ConfigBoolean SHOW_HUD = ConfigBoolean.of(true);
 
-    // --- text ---
-    public static final ConfigSeparator       SEP_NETWORK   = new ConfigSeparator("demo.separator.network");
-    public static final ConfigString          SERVER_URL    = new ConfigString("server_url", "localhost");
+    @Tab("general")
+    @Section("display")
+    public static ConfigBoolean DEBUG_MODE = ConfigBoolean.of(false);
 
-    // --- hotkeys ---
-    public static final ConfigSeparator       SEP_HOTKEYS   = new ConfigSeparator("demo.separator.hotkeys");
-    public static final ConfigHotkeyedBoolean OVERLAY       = new ConfigHotkeyedBoolean(
-            "overlay", false, "LEFT_CONTROL, O");
-    public static final ConfigHotkey          SCREENSHOT    = new ConfigHotkey("screenshot", "F2");
+    @Tab("general")
+    @Section("values")
+    public static ConfigInteger MAX_ITEMS = ConfigInteger.of(64, 1, 256);
+
+    @Tab("general")
+    @Section("values")
+    public static ConfigDouble RENDER_SCALE = ConfigDouble.of(1.0, 0.1, 4.0);
+
+    @Tab("general")
+    @Section("values")
+    public static ConfigOptionList<Quality> QUALITY = ConfigOptionList.of(Quality.MEDIUM);
+
+    @Tab("general")
+    @Section("network")
+    public static ConfigString SERVER_URL = ConfigString.of("localhost");
+
+    // ---- Tab: hotkeys ----
+
+    @Tab("hotkeys")
+    @Hotkeyed(defaultKey = "LEFT_CONTROL, O")
+    public static ConfigBoolean OVERLAY = ConfigBoolean.of(false);
+    // In mod code: OVERLAY.getValue() — boolean only; hotkey managed by the GUI.
+
+    @Tab("hotkeys")
+    public static ConfigHotkey SCREENSHOT = ConfigHotkey.of("F2");
+
+    @Tab("hotkeys")
+    @MenuKey
+    public static ConfigHotkey OPEN = ConfigHotkey.of("LEFT_CONTROL, LEFT_SHIFT, D");
 
     private DemoConfig() {}
 }

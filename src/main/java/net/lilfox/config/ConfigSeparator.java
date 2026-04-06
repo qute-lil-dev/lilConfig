@@ -24,6 +24,7 @@ public final class ConfigSeparator implements IConfig {
     }
 
     @Override public String getName()                       { return name; }
+    @Override public String getModId()                      { return ""; }
     @Override public ConfigType getType()                   { return ConfigType.SEPARATOR; }
     @Override public boolean isModified()                   { return false; }
     @Override public void resetToDefault()                  {}

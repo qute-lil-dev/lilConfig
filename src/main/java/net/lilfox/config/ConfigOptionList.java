@@ -24,6 +24,16 @@ public class ConfigOptionList<E extends Enum<E>> extends ConfigBase<E> implement
     private final E[] options;
 
     /**
+     * Creates an option-list config entry whose name will be injected by the annotation scanner.
+     *
+     * @param defaultValue the default (and initial) selected option; must not be {@code null}
+     * @return a new unnamed entry
+     */
+    public static <E extends Enum<E>> ConfigOptionList<E> of(E defaultValue) {
+        return new ConfigOptionList<>("", defaultValue);
+    }
+
+    /**
      * Creates a new option-list config entry. The available options are all enum
      * constants of the type that {@code defaultValue} belongs to.
      *

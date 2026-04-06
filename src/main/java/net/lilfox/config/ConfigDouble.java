@@ -17,6 +17,28 @@ public class ConfigDouble extends ConfigBase<Double> {
     private final double max;
 
     /**
+     * Creates a double config entry whose name will be injected by the annotation scanner.
+     *
+     * @param defaultValue the default value (will be clamped)
+     * @param min          the inclusive lower bound; use {@link Double#NEGATIVE_INFINITY} for none
+     * @param max          the inclusive upper bound; use {@link Double#POSITIVE_INFINITY} for none
+     * @return a new unnamed entry
+     */
+    public static ConfigDouble of(double defaultValue, double min, double max) {
+        return new ConfigDouble("", defaultValue, min, max);
+    }
+
+    /**
+     * Creates an unbounded double config entry whose name will be injected by the annotation scanner.
+     *
+     * @param defaultValue the default value
+     * @return a new unnamed entry
+     */
+    public static ConfigDouble of(double defaultValue) {
+        return new ConfigDouble("", defaultValue);
+    }
+
+    /**
      * Creates a new double config entry with explicit bounds.
      * {@code defaultValue} is clamped to {@code [min, max]}.
      *

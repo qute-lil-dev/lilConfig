@@ -20,6 +20,16 @@ public class ConfigBoolean extends ConfigBase<Boolean> implements IConfigBoolean
         super(name, defaultValue);
     }
 
+    /**
+     * Creates a boolean config entry whose name will be injected by the annotation scanner.
+     *
+     * @param defaultValue the default value
+     * @return a new unnamed entry
+     */
+    public static ConfigBoolean of(boolean defaultValue) {
+        return new ConfigBoolean("", defaultValue);
+    }
+
     /** {@inheritDoc} */
     @Override
     public ConfigType getType() {

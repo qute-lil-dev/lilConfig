@@ -38,8 +38,8 @@ public class KeyBindsScreenMixin {
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void lilconfig_keyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
-        if (!LilConfigOwnConfig.getInstance().getVanillaKeyOverride().getValue()) return;
-        if (!LilConfigOwnConfig.getInstance().getVanillaUiEmbed().getValue()) return;
+        if (!LilConfigOwnConfig.VANILLA_KEY_OVERRIDE.getValue()) return;
+        if (!LilConfigOwnConfig.VANILLA_UI_EMBED.getValue()) return;
         if (selectedKey == null) return;
 
         int key = event.key();
@@ -67,8 +67,8 @@ public class KeyBindsScreenMixin {
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void lilconfig_mouseClicked(MouseButtonEvent event, boolean doubleClick,
                                         CallbackInfoReturnable<Boolean> cir) {
-        if (!LilConfigOwnConfig.getInstance().getVanillaKeyOverride().getValue()) return;
-        if (!LilConfigOwnConfig.getInstance().getVanillaUiEmbed().getValue()) return;
+        if (!LilConfigOwnConfig.VANILLA_KEY_OVERRIDE.getValue()) return;
+        if (!LilConfigOwnConfig.VANILLA_UI_EMBED.getValue()) return;
         if (selectedKey == null) return;
 
         Button currentButton = lilconfig_findChangeButton(selectedKey);

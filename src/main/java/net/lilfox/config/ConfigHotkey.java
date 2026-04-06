@@ -15,6 +15,17 @@ import org.jspecify.annotations.Nullable;
 public class ConfigHotkey extends ConfigBase<KeyBind> implements IConfigHotkey {
 
     /**
+     * Creates a standalone hotkey config entry whose name will be injected by the annotation scanner.
+     *
+     * @param keyNames comma-separated GLFW key names, e.g. {@code "LEFT_CONTROL, L"};
+     *                 pass an empty string for unbound
+     * @return a new unnamed entry
+     */
+    public static ConfigHotkey of(String keyNames) {
+        return new ConfigHotkey("", keyNames.isBlank() ? KeyBind.NONE : KeyBind.parse(keyNames));
+    }
+
+    /**
      * Creates a new standalone hotkey config entry.
      *
      * @param name       the unique name used as JSON key and i18n base key

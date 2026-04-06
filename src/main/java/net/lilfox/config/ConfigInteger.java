@@ -16,6 +16,18 @@ public class ConfigInteger extends ConfigBase<Integer> {
     private final int maxValue;
 
     /**
+     * Creates an integer config entry whose name will be injected by the annotation scanner.
+     *
+     * @param defaultValue the default value (will be clamped)
+     * @param minValue     the inclusive lower bound
+     * @param maxValue     the inclusive upper bound
+     * @return a new unnamed entry
+     */
+    public static ConfigInteger of(int defaultValue, int minValue, int maxValue) {
+        return new ConfigInteger("", defaultValue, minValue, maxValue);
+    }
+
+    /**
      * Creates a new integer config entry.
      * {@code defaultValue} is clamped to {@code [minValue, maxValue]}.
      *
