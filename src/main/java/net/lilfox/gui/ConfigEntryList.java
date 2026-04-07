@@ -6,6 +6,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
+import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
@@ -47,6 +48,7 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
     static final int EFFECT_BTN_W  = 60;
     static final int RESET_BTN_W   = 50;
     static final int BTN_H         = 20;
+    static final int MODE_BTN_W    = BTN_H;
 
     private final LilConfigScreen owner;
 
@@ -100,6 +102,7 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
         private final List<AbstractWidget> widgets = new ArrayList<>();
         private Button resetButton;
         private Button hotkeyButton;
+        private boolean sliderMode = true;
 
         public ConfigRow(IConfig config, LilConfigScreen screen) {
             this.config = config;
@@ -140,18 +143,31 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                 }
                 case INTEGER -> {
                     ConfigInteger ci = (ConfigInteger) config;
-                    EditBox box = new EditBox(Minecraft.getInstance().font,
-                            0, 0, WIDGET_ZONE, BTN_H,
-                            Component.literal(ci.getName()));
-                    box.setValue(String.valueOf(ci.getValue()));
-                    box.setResponder(s -> {
-                        try { ci.setValue(Integer.parseInt(s.trim())); } catch (NumberFormatException ignored) {}
-                    });
-                    Component inputTip = I18nHelper.inputDesc(config);
-                    if (inputTip != null) box.setTooltip(Tooltip.create(inputTip));
-                    else box.setTooltip(Tooltip.create(Component.translatable("lilconfig.tooltip.range",
-                            ci.getMinValue(), ci.getMaxValue())));
-                    widgets.add(box);
+                    int inputW = WIDGET_ZONE - MODE_BTN_W - ROW_PADDING;
+                    if (sliderMode) {
+                        IntSlider slider = new IntSlider(0, 0, inputW, BTN_H, ci);
+                        Component inputTip = I18nHelper.inputDesc(config);
+                        if (inputTip != null) slider.setTooltip(Tooltip.create(inputTip));
+                        else slider.setTooltip(Tooltip.create(Component.translatable(
+                                "lilconfig.tooltip.range", ci.getMinValue(), ci.getMaxValue())));
+                        widgets.add(slider);
+                    } else {
+                        EditBox box = new EditBox(Minecraft.getInstance().font,
+                                0, 0, inputW, BTN_H, Component.literal(ci.getName()));
+                        box.setValue(String.valueOf(ci.getValue()));
+                        box.setResponder(s -> {
+                            try { ci.setValue(Integer.parseInt(s.trim())); } catch (NumberFormatException ignored) {}
+                        });
+                        Component inputTip = I18nHelper.inputDesc(config);
+                        if (inputTip != null) box.setTooltip(Tooltip.create(inputTip));
+                        else box.setTooltip(Tooltip.create(Component.translatable(
+                                "lilconfig.tooltip.range", ci.getMinValue(), ci.getMaxValue())));
+                        widgets.add(box);
+                    }
+                    widgets.add(Button.builder(
+                            Component.literal(sliderMode ? "T" : "S"),
+                            btn -> { sliderMode = !sliderMode; rebuildWidgets(); })
+                            .size(MODE_BTN_W, BTN_H).pos(0, 0).build());
                 }
                 case STRING -> {
                     ConfigString cs = (ConfigString) config;
@@ -176,20 +192,36 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                 }
                 case DOUBLE -> {
                     ConfigDouble cd = (ConfigDouble) config;
-                    EditBox box = new EditBox(Minecraft.getInstance().font,
-                            0, 0, WIDGET_ZONE, BTN_H,
-                            Component.literal(cd.getName()));
-                    box.setValue(String.valueOf(cd.getValue()));
-                    box.setResponder(s -> {
-                        try { cd.setValue(Double.parseDouble(s.trim())); } catch (NumberFormatException ignored) {}
-                    });
-                    Component inputTip = I18nHelper.inputDesc(config);
-                    if (inputTip != null) box.setTooltip(Tooltip.create(inputTip));
-                    else if (Double.isFinite(cd.getMin()) || Double.isFinite(cd.getMax())) {
-                        box.setTooltip(Tooltip.create(Component.translatable("lilconfig.tooltip.range",
-                                cd.getMin(), cd.getMax())));
+                    boolean bounded = Double.isFinite(cd.getMin()) && Double.isFinite(cd.getMax());
+                    int inputW = bounded ? WIDGET_ZONE - MODE_BTN_W - ROW_PADDING : WIDGET_ZONE;
+                    if (bounded && sliderMode) {
+                        DoubleSlider slider = new DoubleSlider(0, 0, inputW, BTN_H, cd);
+                        Component inputTip = I18nHelper.inputDesc(config);
+                        if (inputTip != null) slider.setTooltip(Tooltip.create(inputTip));
+                        else slider.setTooltip(Tooltip.create(Component.translatable(
+                                "lilconfig.tooltip.range", cd.getMin(), cd.getMax())));
+                        widgets.add(slider);
+                    } else {
+                        EditBox box = new EditBox(Minecraft.getInstance().font,
+                                0, 0, inputW, BTN_H, Component.literal(cd.getName()));
+                        box.setValue(String.valueOf(cd.getValue()));
+                        box.setResponder(s -> {
+                            try { cd.setValue(Double.parseDouble(s.trim())); } catch (NumberFormatException ignored) {}
+                        });
+                        Component inputTip = I18nHelper.inputDesc(config);
+                        if (inputTip != null) box.setTooltip(Tooltip.create(inputTip));
+                        else if (Double.isFinite(cd.getMin()) || Double.isFinite(cd.getMax())) {
+                            box.setTooltip(Tooltip.create(Component.translatable(
+                                    "lilconfig.tooltip.range", cd.getMin(), cd.getMax())));
+                        }
+                        widgets.add(box);
                     }
-                    widgets.add(box);
+                    if (bounded) {
+                        widgets.add(Button.builder(
+                                Component.literal(sliderMode ? "T" : "S"),
+                                btn -> { sliderMode = !sliderMode; rebuildWidgets(); })
+                                .size(MODE_BTN_W, BTN_H).pos(0, 0).build());
+                    }
                 }
                 case SEPARATOR -> { return; }
             }
@@ -209,18 +241,28 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
             widgets.add(resetButton = resetBtn);
         }
 
+        /** Clears and rebuilds widgets without touching the config value. Used by the mode-toggle button. */
+        private void rebuildWidgets() {
+            widgets.clear();
+            buildWidgets(this.screen);
+        }
+
         /** Repositions all widgets based on the entry's current content bounds. */
         private void repositionWidgets() {
-            int rowRight = getContentRight();
-            int cy       = getContentYMiddle() - BTN_H / 2;
+            int cy = getContentYMiddle() - BTN_H / 2;
 
-            int x = rowRight;
-            for (int i = widgets.size() - 1; i >= 0; i--) {
-                AbstractWidget w = widgets.get(i);
-                x -= w.getWidth();
+            if (resetButton != null) {
+                resetButton.setX(getContentRight() - RESET_BTN_W);
+                resetButton.setY(cy);
+            }
+
+            Component label = I18nHelper.label(config);
+            int x = getContentX() + Minecraft.getInstance().font.width(label) + ROW_PADDING;
+            for (AbstractWidget w : widgets) {
+                if (w == resetButton) continue;
                 w.setX(x);
                 w.setY(cy);
-                x -= ROW_PADDING;
+                x += w.getWidth() + ROW_PADDING;
             }
         }
 
@@ -265,8 +307,7 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
 
         private void resetRow() {
             config.resetToDefault();
-            widgets.clear();
-            buildWidgets(this.screen);
+            rebuildWidgets();
         }
 
         // @SuppressWarnings("null"): E is Enum<E> — getValue() is never null; JDT false positive on wildcard capture.
@@ -352,6 +393,57 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                     I18nHelper.sectionLabel(config)
                               .copy().withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD),
                     cx, cy, -1);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+
+    private static final class IntSlider extends AbstractSliderButton {
+        private final ConfigInteger ci;
+
+        IntSlider(int x, int y, int w, int h, ConfigInteger ci) {
+            super(x, y, w, h,
+                  Component.literal(String.valueOf(ci.getValue())),
+                  ci.getMaxValue() == ci.getMinValue() ? 0.0
+                      : (double)(ci.getValue() - ci.getMinValue()) / (ci.getMaxValue() - ci.getMinValue()));
+            this.ci = ci;
+        }
+
+        @Override
+        protected void updateMessage() {
+            setMessage(Component.literal(String.valueOf(ci.getValue())));
+        }
+
+        @Override
+        protected void applyValue() {
+            ci.setValue((int) Math.round(ci.getMinValue() + value * (ci.getMaxValue() - ci.getMinValue())));
+            updateMessage();
+        }
+    }
+
+    private static final class DoubleSlider extends AbstractSliderButton {
+        private final ConfigDouble cd;
+
+        DoubleSlider(int x, int y, int w, int h, ConfigDouble cd) {
+            super(x, y, w, h,
+                  fmtMsg(cd),
+                  (cd.getValue() - cd.getMin()) / (cd.getMax() - cd.getMin()));
+            this.cd = cd;
+        }
+
+        @Override
+        protected void updateMessage() {
+            setMessage(fmtMsg(cd));
+        }
+
+        @Override
+        protected void applyValue() {
+            cd.setValue(cd.getMin() + value * (cd.getMax() - cd.getMin()));
+            updateMessage();
+        }
+
+        private static Component fmtMsg(ConfigDouble cd) {
+            return Component.literal(String.format("%.4g", cd.getValue()));
         }
     }
 }
