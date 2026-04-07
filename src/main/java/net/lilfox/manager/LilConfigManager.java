@@ -8,10 +8,14 @@ import net.lilfox.config.IConfigHotkey;
 import net.lilfox.hotkey.HotkeyContext;
 import net.lilfox.hotkey.IHotkeyCallback;
 import net.lilfox.hotkey.KeyBind;
+import net.lilfox.mixin.KeyMappingCurrentKeyAccessor;
 import net.lilfox.persist.ConfigSerializer;
+import net.lilfox.util.I18nHelper;
 import net.lilfox.vanilla.VanillaKeybindProvider;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -98,29 +102,45 @@ public final class LilConfigManager {
     }
 
     /**
-     * Returns {@code true} if {@code kb} has a subset/superset conflict with any other
-     * registered {@link IConfigHotkey} entry across all providers' config groups.
+     * Describes a single hotkey conflict: another binding that overlaps with the queried one.
+     *
+     * @param modName    display name of the mod or source (e.g. "Litematica", "Vanilla Keys")
+     * @param groupName  display name of the config group / category
+     * @param entryLabel translated label of the conflicting config entry
+     * @param keyDisplay human-readable key string of the conflicting binding
+     */
+    public record ConflictEntry(String modName, String groupName, Component entryLabel, String keyDisplay) {}
+
+    /**
+     * Returns a list of all bindings that conflict with {@code kb}.
      *
      * <p>Two bindings conflict when one's key set is a subset of or equal to the other's.
      * Conflict domains are isolated: debug vanilla keys only conflict within
      * {@link net.minecraft.client.KeyMapping.Category#DEBUG}, and spectator vanilla keys
-     * only within {@link net.minecraft.client.KeyMapping.Category#SPECTATOR}, since both
-     * groups are active only under specific conditions.
+     * only within {@link net.minecraft.client.KeyMapping.Category#SPECTATOR}.
      *
      * <p>When both the owner and the candidate are vanilla keys still at their default values,
-     * no conflict is reported. Vanilla intentionally ships duplicate defaults (e.g.
-     * {@code key.debug.overlay} and {@code key.debug.modifier} are both F3 by default).
+     * no conflict is reported (vanilla intentionally ships duplicate defaults).
+     *
+     * <p>In addition to registered providers, also checks native vanilla {@link KeyMapping}
+     * instances (the player's current assignments in the controls screen) that are not already
+     * covered by a VanillaKeybindProvider override.
      *
      * @param kb    the binding to check
-     * @param owner the config entry that owns {@code kb}; used to determine the conflict
-     *              domain. May be {@code null} to treat as a non-categorised entry.
-     * @return {@code true} if a conflict exists
+     * @param owner the config entry that owns {@code kb}; skipped during iteration.
+     *              May be {@code null} to treat as a non-categorised entry.
+     * @return an unmodifiable list of conflict entries (empty when no conflicts)
      */
-    public boolean isConflicting(KeyBind kb, @Nullable IConfigHotkey owner) {
-        if (kb.getKeys().isEmpty()) return false;
+    public List<ConflictEntry> getConflicts(KeyBind kb, @Nullable IConfigHotkey owner) {
+        if (kb.getKeys().isEmpty()) return List.of();
         VanillaKeybindProvider vanilla = VanillaKeybindProvider.getInstance();
         boolean ownerIsDebug = owner != null && vanilla.isDebugHotkey(owner);
         boolean ownerIsSpectator = owner != null && vanilla.isSpectatorHotkey(owner);
+        List<InputConstants.Key> ak = kb.getKeys();
+
+        List<ConflictEntry> result = new ArrayList<>();
+
+        // --- Registered lilConfig providers ---
         for (IConfigProvider provider : providers) {
             for (ConfigGroup group : provider.getConfigGroups()) {
                 for (IConfig config : group.getConfigs()) {
@@ -130,19 +150,59 @@ public final class LilConfigManager {
                     if (other.getKeys().isEmpty()) continue;
                     if (ownerIsDebug != vanilla.isDebugHotkey(hk)) continue;
                     if (ownerIsSpectator != vanilla.isSpectatorHotkey(hk)) continue;
-                    // Vanilla intentional duplicates: skip when both vanilla keys are still at defaults.
                     if (owner != null
                             && vanilla.isVanillaHotkey(owner)
                             && vanilla.isVanillaHotkey(hk)
                             && !owner.isModified()
                             && !hk.isModified()) continue;
-                    List<InputConstants.Key> ak = kb.getKeys();
                     List<InputConstants.Key> bk = other.getKeys();
-                    if (bk.containsAll(ak) || ak.containsAll(bk)) return true;
+                    if (bk.containsAll(ak) || ak.containsAll(bk)) {
+                        result.add(new ConflictEntry(
+                                provider.getDisplayName(),
+                                group.getName(),
+                                I18nHelper.label(config),
+                                other.toDisplayString()));
+                    }
                 }
             }
         }
-        return false;
+
+        // --- Native vanilla KeyMapping (controls screen assignments) ---
+        // Skip mappings that already have a VanillaKeybindProvider override — those
+        // are covered by the provider loop above.
+        KeyMapping[] keyMappings = Minecraft.getInstance().options.keyMappings;
+        for (KeyMapping km : keyMappings) {
+            KeyBind override = vanilla.getComboForMapping(km);
+            if (!override.getKeys().isEmpty()) continue; // already covered above
+            InputConstants.Key rawKey = ((KeyMappingCurrentKeyAccessor) km).getCurrentKey();
+            if (rawKey.equals(InputConstants.UNKNOWN)) continue;
+            KeyBind vanillaBind = KeyBind.of(rawKey);
+            List<InputConstants.Key> bk = vanillaBind.getKeys();
+            if (bk.containsAll(ak) || ak.containsAll(bk)) {
+                boolean isDebug = km.getCategory() == KeyMapping.Category.DEBUG;
+                boolean isSpectator = km.getCategory() == KeyMapping.Category.SPECTATOR;
+                if (isDebug != ownerIsDebug || isSpectator != ownerIsSpectator) continue;
+                result.add(new ConflictEntry(
+                        Component.translatable("lilconfig.tooltip.conflicts.vanilla").getString(),
+                        km.getCategory().label().getString(),
+                        Component.translatable(km.getName()),
+                        rawKey.getDisplayName().getString()));
+            }
+        }
+
+        return Collections.unmodifiableList(result);
+    }
+
+    /**
+     * Returns {@code true} if {@code kb} has a subset/superset conflict with any other
+     * registered {@link IConfigHotkey} entry or native vanilla key binding.
+     *
+     * @param kb    the binding to check
+     * @param owner the config entry that owns {@code kb}; may be {@code null}
+     * @return {@code true} if a conflict exists
+     */
+    public boolean isConflicting(KeyBind kb, @Nullable IConfigHotkey owner) {
+        return !getConflicts(kb, owner).isEmpty();
     }
 
     // -------------------------------------------------------------------------

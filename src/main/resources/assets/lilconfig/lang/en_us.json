@@ -4,6 +4,9 @@
   "lilconfig.tooltip.reset": "Reset to default",
   "lilconfig.tooltip.rebind": "Click to rebind.\nPress keys to set a combo, Enter to confirm, Esc to clear.",
   "lilconfig.tooltip.range": "Range: %d \u2013 %d",
+  "lilconfig.tooltip.conflicts": "Conflicts:",
+  "lilconfig.tooltip.conflicts.hint": "Hold Shift for more information",
+  "lilconfig.tooltip.conflicts.vanilla": "Vanilla Keys",
 
   "lilconfig.tabs.settings": "Settings",
   "lilconfig.tabs.dev": "Dev",

@@ -9,13 +9,19 @@ import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.lilfox.config.*;
 import net.lilfox.hotkey.KeyBind;
 import net.lilfox.manager.LilConfigManager;
+import net.lilfox.manager.LilConfigManager.ConflictEntry;
 import net.lilfox.util.I18nHelper;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.SequencedMap;
 
 import org.jspecify.annotations.NonNull;
 
@@ -118,7 +124,6 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                     IConfigBoolean b  = (IConfigBoolean) config;
                     hotkeyButton = Button.builder(keyLabel(hk.getKeyBind(), hk),
                             btn -> screen.startRebind(hk, btn))
-                            .tooltip(Tooltip.create(Component.translatable("lilconfig.tooltip.rebind")))
                             .size(HOTKEY_BTN_W, BTN_H).pos(0, 0).build();
                     Button toggleBtn = Button.builder(boolLabel(b.getValue()),
                             btn -> { b.setValue(!b.getValue()); btn.setMessage(boolLabel(b.getValue())); })
@@ -130,7 +135,6 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                     IConfigHotkey hk = (IConfigHotkey) config;
                     hotkeyButton = Button.builder(keyLabel(hk.getKeyBind(), hk),
                             btn -> screen.startRebind(hk, btn))
-                            .tooltip(Tooltip.create(Component.translatable("lilconfig.tooltip.rebind")))
                             .size(WIDGET_ZONE, BTN_H).pos(0, 0).build();
                     widgets.add(hotkeyButton);
                 }
@@ -143,7 +147,9 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                     box.setResponder(s -> {
                         try { ci.setValue(Integer.parseInt(s.trim())); } catch (NumberFormatException ignored) {}
                     });
-                    box.setTooltip(Tooltip.create(Component.translatable("lilconfig.tooltip.range",
+                    Component inputTip = I18nHelper.inputDesc(config);
+                    if (inputTip != null) box.setTooltip(Tooltip.create(inputTip));
+                    else box.setTooltip(Tooltip.create(Component.translatable("lilconfig.tooltip.range",
                             ci.getMinValue(), ci.getMaxValue())));
                     widgets.add(box);
                 }
@@ -154,8 +160,8 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                             I18nHelper.label(config));
                     box.setValue(cs.getValue());
                     box.setResponder(cs::setValue);
-                    Component descTip = I18nHelper.desc(config);
-                    if (descTip != null) box.setTooltip(Tooltip.create(descTip));
+                    Component inputTip = I18nHelper.inputDesc(config);
+                    if (inputTip != null) box.setTooltip(Tooltip.create(inputTip));
                     widgets.add(box);
                 }
                 case OPTION_LIST -> {
@@ -177,7 +183,9 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                     box.setResponder(s -> {
                         try { cd.setValue(Double.parseDouble(s.trim())); } catch (NumberFormatException ignored) {}
                     });
-                    if (Double.isFinite(cd.getMin()) || Double.isFinite(cd.getMax())) {
+                    Component inputTip = I18nHelper.inputDesc(config);
+                    if (inputTip != null) box.setTooltip(Tooltip.create(inputTip));
+                    else if (Double.isFinite(cd.getMin()) || Double.isFinite(cd.getMax())) {
                         box.setTooltip(Tooltip.create(Component.translatable("lilconfig.tooltip.range",
                                 cd.getMin(), cd.getMax())));
                     }
@@ -223,6 +231,8 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
             if (hotkeyButton != null && !screen.isRebinding(config)) {
                 IConfigHotkey hk = (IConfigHotkey) config;
                 hotkeyButton.setMessage(keyLabel(hk.getKeyBind(), hk));
+                List<ConflictEntry> conflicts = LilConfigManager.getInstance().getConflicts(hk.getKeyBind(), hk);
+                hotkeyButton.setTooltip(Tooltip.create(buildHotkeyTooltip(hk, conflicts)));
             }
             // Draw config name using the entry's own content coordinates, not the mouse position
             int textY = getContentY() + (getContentHeight() - Minecraft.getInstance().font.lineHeight) / 2;
@@ -269,6 +279,55 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
             return v
                 ? Component.translatable("options.on").withStyle(ChatFormatting.GREEN)
                 : Component.translatable("options.off").withStyle(ChatFormatting.RED);
+        }
+
+        private static Component buildHotkeyTooltip(IConfigHotkey hk, List<ConflictEntry> conflicts) {
+            MutableComponent tip = Component.empty();
+            Component hotkeyDesc = I18nHelper.hotkeyDesc((IConfig) hk);
+            if (hotkeyDesc != null) {
+                tip.append(hotkeyDesc).append("\n");
+            }
+            tip.append(Component.translatable("lilconfig.tooltip.rebind"));
+
+            if (conflicts.isEmpty()) return tip;
+
+            tip.append("\n");
+            long wh = Minecraft.getInstance().getWindow().handle();
+            boolean shiftDown = KeyBind.isKeyHeld(com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_LEFT_SHIFT), wh)
+                    || KeyBind.isKeyHeld(com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_RIGHT_SHIFT), wh);
+            if (!shiftDown) {
+                tip.append("\n").append(
+                    Component.translatable("lilconfig.tooltip.conflicts.hint")
+                             .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+                return tip;
+            }
+
+            tip.append("\n").append(
+                Component.translatable("lilconfig.tooltip.conflicts")
+                         .withStyle(ChatFormatting.WHITE));
+
+            // Group by mod name (preserving insertion order)
+            SequencedMap<String, List<ConflictEntry>> byMod = new LinkedHashMap<>();
+            for (ConflictEntry e : conflicts) {
+                byMod.computeIfAbsent(e.modName(), k -> new ArrayList<>()).add(e);
+            }
+
+            boolean firstMod = true;
+            for (Map.Entry<String, List<ConflictEntry>> modEntry : byMod.entrySet()) {
+                if (!firstMod) {
+                    tip.append("\n").append(Component.literal("-----").withStyle(ChatFormatting.DARK_GRAY));
+                }
+                firstMod = false;
+                tip.append("\n").append(
+                    Component.literal(modEntry.getKey()).withStyle(ChatFormatting.GOLD));
+                for (ConflictEntry e : modEntry.getValue()) {
+                    tip.append("\n  - ").append(
+                        e.entryLabel().copy()
+                         .append(Component.literal(" [" + e.keyDisplay() + "]"))
+                         .withStyle(ChatFormatting.GOLD));
+                }
+            }
+            return tip;
         }
     }
 

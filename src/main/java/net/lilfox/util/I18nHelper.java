@@ -88,6 +88,36 @@ public final class I18nHelper {
     }
 
     /**
+     * Returns a {@link Component} for an input field tooltip (INTEGER, DOUBLE, STRING types).
+     * Uses the translated {@code modId.settings.name.inputDesc} key when available;
+     * returns {@code null} when the key is absent (tooltip not shown).
+     *
+     * @param config the config entry
+     * @return a tooltip component, or {@code null} if absent or modId is empty
+     */
+    public static @Nullable Component inputDesc(IConfig config) {
+        String modId = config.getModId();
+        if (modId.isEmpty()) return null;
+        String key = modId + ".settings." + config.getName() + ".inputDesc";
+        return I18n.exists(key) ? Component.translatable(key) : null;
+    }
+
+    /**
+     * Returns a {@link Component} for a mod-specific hotkey button tooltip.
+     * Uses the translated {@code modId.settings.name.hotkeyDesc} key when available;
+     * returns {@code null} when the key is absent (tooltip not shown).
+     *
+     * @param config the config entry
+     * @return a tooltip component, or {@code null} if absent or modId is empty
+     */
+    public static @Nullable Component hotkeyDesc(IConfig config) {
+        String modId = config.getModId();
+        if (modId.isEmpty()) return null;
+        String key = modId + ".settings." + config.getName() + ".hotkeyDesc";
+        return I18n.exists(key) ? Component.translatable(key) : null;
+    }
+
+    /**
      * Returns the tab label {@link Component} for the given mod and tab identifier.
      * Looks up {@code modId.tabs.tabId}; falls back to the raw tab id string.
      *

@@ -10,7 +10,8 @@
               "KeyBindsEntryAccessor",
               "KeyBindsListAccessor",
               "KeyBindsScreenMixin",
-              "KeyBindsListMixin"
+              "KeyBindsListMixin",
+              "KeyMappingCurrentKeyAccessor"
             ],
   "injectors": { "defaultRequire": 1 }
 }

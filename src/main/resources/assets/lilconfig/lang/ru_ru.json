@@ -4,6 +4,9 @@
   "lilconfig.tooltip.reset": "Сбросить к значению по умолчанию",
   "lilconfig.tooltip.rebind": "Нажмите для переназначения.\nНажмите клавиши для задания комбинации, Enter — подтвердить, Esc — сбросить.",
   "lilconfig.tooltip.range": "Диапазон: %d – %d",
+  "lilconfig.tooltip.conflicts": "Конфликты:",
+  "lilconfig.tooltip.conflicts.hint": "Зажмите Shift для подробностей",
+  "lilconfig.tooltip.conflicts.vanilla": "Vanilla Keys",
 
   "settings": "Настройки",
   "demo": "Демо",
