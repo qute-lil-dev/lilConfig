@@ -5,16 +5,11 @@
   "lilconfig.tooltip.rebind": "Click to rebind.\nPress keys to set a combo, Enter to confirm, Esc to clear.",
   "lilconfig.tooltip.range": "Range: %d \u2013 %d",
 
-  "settings": "Settings",
-  "demo": "Demo",
+  "lilconfig.tabs.settings": "Settings",
+  "lilconfig.tabs.dev": "Dev",
 
-  "vanilla_key_override": "Vanilla Key Override",
-  "menu_key": "Menu Key",
-
-  "show_hud": "Show HUD",
-  "debug_mode": "Debug Mode",
-  "max_items": "Max Items",
-  "server_url": "Server URL",
-  "overlay": "Overlay",
-  "screenshot": "Screenshot"
+  "lilconfig.sections.display": "Display",
+  "lilconfig.sections.values": "Values",
+  "lilconfig.sections.network": "Network",
+  "lilconfig.sections.misc": "Misc"
 }

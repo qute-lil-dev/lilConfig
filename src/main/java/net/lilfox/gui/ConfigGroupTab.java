@@ -5,6 +5,7 @@ import net.minecraft.client.gui.components.tabs.Tab;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.network.chat.Component;
 import net.lilfox.config.ConfigGroup;
+import net.lilfox.util.I18nHelper;
 
 import java.util.function.Consumer;
 
@@ -24,9 +25,10 @@ public class ConfigGroupTab implements Tab {
      *
      * @param group   the config group to display
      * @param screen  the owning screen (needed to size the list)
+     * @param modId   the owning mod id, used to resolve the tab i18n key
      */
-    public ConfigGroupTab(ConfigGroup group, LilConfigScreen screen) {
-        this.title = Component.translatable(group.getName());
+    public ConfigGroupTab(ConfigGroup group, LilConfigScreen screen, String modId) {
+        this.title = I18nHelper.tabLabel(modId, group.getName());
         this.list  = new ConfigEntryList(screen, group);
     }
 

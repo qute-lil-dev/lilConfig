@@ -341,7 +341,7 @@ public final class VanillaKeybindProvider implements IConfigProvider {
         if (cachedFlatGroup != null) return cachedFlatGroup;
         List<IConfig> entries = new ArrayList<>();
         for (ConfigGroup g : groups) {
-            entries.add(new ConfigSeparator(g.getName()));
+            entries.add(new ConfigSeparator("", g.getName()));
             entries.addAll(g.getConfigs());
         }
         cachedFlatGroup = new ConfigGroup("vanilla_keys_flat", List.copyOf(entries));

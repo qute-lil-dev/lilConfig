@@ -149,7 +149,7 @@ final class AnnotationConfigScanner {
                 List<IConfig> entries = secEntry.getValue();
                 if (entries.isEmpty()) continue;
                 if (multiSection && !secEntry.getKey().equals(NO_SEC)) {
-                    flat.add(new ConfigSeparator(secEntry.getKey()));
+                    flat.add(new ConfigSeparator(modId, secEntry.getKey()));
                 }
                 flat.addAll(entries);
             }

@@ -97,8 +97,9 @@ public class LilConfigScreen extends Screen {
 
         tabManager = new TabManager(this::addRenderableWidget, this::removeWidget);
 
+        String modId = provider.getModId();
         List<ConfigGroupTab> groupTabs = provider.getConfigGroups().stream()
-                .map(g -> new ConfigGroupTab(g, this))
+                .map(g -> new ConfigGroupTab(g, this, modId))
                 .toList();
         tabs.addAll(groupTabs);
 

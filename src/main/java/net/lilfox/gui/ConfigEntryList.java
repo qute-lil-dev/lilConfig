@@ -290,8 +290,8 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
             int cx = (getContentX() + getContentRight()) / 2;
             int cy = getContentY() + (getContentHeight() - Minecraft.getInstance().font.lineHeight) / 2;
             gfx.centeredText(Minecraft.getInstance().font,
-                    Component.translatable(config.getName())
-                             .withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD),
+                    I18nHelper.sectionLabel(config)
+                              .copy().withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD),
                     cx, cy, -1);
         }
     }
