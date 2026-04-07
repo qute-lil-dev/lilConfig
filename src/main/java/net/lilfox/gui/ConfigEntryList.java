@@ -31,24 +31,29 @@ import org.jspecify.annotations.NonNull;
  *
  * <p>Row layout (all widths in px):
  * <pre>
- *   [name label]  [     WIDGET_ZONE     ] [Effect?] [Reset?]
- *                 |-- HOTKEY_BTN_W -|-2-|-- TOGGLE_BTN_W --|
+ *   |←LABEL_ZONE_W→|←────WIDGET_ZONE────→| [Effect?]      [Reset]
+ *                  |←HOTKEY_BTN_W→|4|←TOGGLE_BTN_W→|
  * </pre>
+ * Labels are drawn at the content left edge and may extend up to {@code LABEL_ZONE_W}.
+ * Widgets start at a fixed column offset ({@code LABEL_ZONE_W}) so all rows align.
  * {@code ConfigBoolean} fills the entire zone with its toggle button so it
  * aligns with the two-button layout of {@code ConfigHotkeyedBoolean}.
+ * The reset button is pinned to the far-right edge of each row.
  */
 public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryList.ConfigRow> {
 
     // ----- layout constants -----
-    static final int HOTKEY_BTN_W  = 100;
-    static final int TOGGLE_BTN_W  = 60;
+    static final int HOTKEY_BTN_W  = 60;
+    static final int TOGGLE_BTN_W  = 28;
     static final int ROW_PADDING   = 4;
     /** Total widget zone = hotkey btn + gap + toggle btn; matches two-button layout width exactly. */
     static final int WIDGET_ZONE   = HOTKEY_BTN_W + ROW_PADDING + TOGGLE_BTN_W;
-    static final int EFFECT_BTN_W  = 60;
-    static final int RESET_BTN_W   = 50;
+    static final int EFFECT_BTN_W  = 36;
+    static final int RESET_BTN_W   = 36;
     static final int BTN_H         = 20;
     static final int MODE_BTN_W    = BTN_H;
+    /** Fixed column offset from row left edge where all widgets begin; labels occupy the space to the left. */
+    static final int LABEL_ZONE_W  = 80;
 
     private final LilConfigScreen owner;
 
@@ -256,8 +261,7 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                 resetButton.setY(cy);
             }
 
-            Component label = I18nHelper.label(config);
-            int x = getContentX() + Minecraft.getInstance().font.width(label) + ROW_PADDING;
+            int x = getContentX() + LABEL_ZONE_W;
             for (AbstractWidget w : widgets) {
                 if (w == resetButton) continue;
                 w.setX(x);
