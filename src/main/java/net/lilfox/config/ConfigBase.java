@@ -53,7 +53,7 @@ public abstract class ConfigBase<T> implements IConfig {
      * Sets the name of this entry. Called by the annotation scanner to inject
      * the field name; not intended for direct use in mod code.
      *
-     * @param name the new name (snake_case JSON key)
+     * @param name the new name (camelCase JSON key)
      */
     public void setName(String name) {
         this.name = name;

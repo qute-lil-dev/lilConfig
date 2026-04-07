@@ -35,7 +35,7 @@ import java.util.Map;
  *   <li>Fields annotated with {@link Hotkeyed} and declared as {@link ConfigBoolean} are
  *       replaced (via reflection) with a {@link ConfigHotkeyedBoolean} using the
  *       annotation's {@code defaultKey}.</li>
- *   <li>The field name (UPPER_SNAKE_CASE → lower_snake_case) is injected as each
+ *   <li>The field name (UPPER_SNAKE_CASE → lowerCamelCase) is injected as each
  *       entry's name; the mod id is also set so the GUI can build i18n keys.</li>
  * </ul>
  */
@@ -52,6 +52,7 @@ final class AnnotationConfigScanner {
      * @param configClass the class annotated with {@link LilConfigMod}
      * @return a provider ready for registration
      * @throws IllegalArgumentException if the class lacks {@link LilConfigMod}
+     * @see #toCamelCase(String)
      */
     @SuppressWarnings("null")   // getAnnotation() can return null; IDE null-analysis is imprecise here
     static IConfigProvider scan(Class<?> configClass) {
@@ -97,7 +98,7 @@ final class AnnotationConfigScanner {
             config = applyHotkeyed(f, config);
 
             // Inject name and modId
-            String name = toSnakeCase(f.getName());
+            String name = toCamelCase(f.getName());
             ((ConfigBase<?>) config).setName(name);
             ((ConfigBase<?>) config).setModId(modId);
 
@@ -209,16 +210,20 @@ final class AnnotationConfigScanner {
     }
 
     /**
-     * Converts a Java field name to lower_snake_case.
-     * {@code SHOW_HUD} → {@code "show_hud"}, {@code maxItems} → {@code "max_items"}.
+     * Converts a Java field name to lowerCamelCase.
+     * {@code SHOW_HUD} → {@code "showHud"}, {@code maxItems} → {@code "maxItems"}.
      */
-    static String toSnakeCase(String name) {
-        if (name.equals(name.toUpperCase())) return name.toLowerCase();
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < name.length(); i++) {
-            char c = name.charAt(i);
-            if (Character.isUpperCase(c) && i > 0) sb.append('_');
-            sb.append(Character.toLowerCase(c));
+    static String toCamelCase(String name) {
+        if (!name.contains("_")) {
+            return Character.toLowerCase(name.charAt(0)) + name.substring(1);
+        }
+        String[] parts = name.toLowerCase().split("_");
+        StringBuilder sb = new StringBuilder(parts[0]);
+        for (int i = 1; i < parts.length; i++) {
+            if (!parts[i].isEmpty()) {
+                sb.append(Character.toUpperCase(parts[i].charAt(0)));
+                sb.append(parts[i].substring(1));
+            }
         }
         return sb.toString();
     }

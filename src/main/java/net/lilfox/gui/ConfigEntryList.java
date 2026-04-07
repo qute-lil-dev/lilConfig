@@ -226,7 +226,16 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
             }
             // Draw config name using the entry's own content coordinates, not the mouse position
             int textY = getContentY() + (getContentHeight() - Minecraft.getInstance().font.lineHeight) / 2;
-            gfx.text(Minecraft.getInstance().font, I18nHelper.label(config), getContentX(), textY, -1);
+            Component label = I18nHelper.label(config);
+            gfx.text(Minecraft.getInstance().font, label, getContentX(), textY, -1);
+            int labelW = Minecraft.getInstance().font.width(label);
+            if (mouseX >= getContentX() && mouseX < getContentX() + labelW
+                    && mouseY >= textY && mouseY < textY + Minecraft.getInstance().font.lineHeight) {
+                Component desc = I18nHelper.desc(config);
+                if (desc != null) {
+                    gfx.setTooltipForNextFrame(desc, mouseX, mouseY);
+                }
+            }
             for (AbstractWidget w : widgets) {
                 w.extractRenderState(gfx, mouseX, mouseY, partialTick);
             }
