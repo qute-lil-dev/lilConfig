@@ -38,7 +38,7 @@ public class LilConfigClient implements ClientModInitializer {
             // here. Clearing first would discard that data before it can be used.
             try {
                 if (client.level == null) return;
-                if (LilConfigOwnConfig.VANILLA_KEY_OVERRIDE.getValue())
+                if (LilConfigOwnConfig.vanillaKeyOverride.getValue())
                     VanillaKeybindProvider.getInstance().tick();
                 LilConfigManager manager = LilConfigManager.getInstance();
                 if (client.screen == null) {

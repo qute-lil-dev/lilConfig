@@ -71,17 +71,20 @@ public final class I18nHelper {
     }
 
     /**
-     * Returns a {@link Component} for the tooltip body if the {@code .desc} key exists,
-     * otherwise returns {@code null} (tooltip not shown).
+     * Returns a {@link Component} for the tooltip body.
+     * Uses the translated {@code modId.settings.name.desc} key when available;
+     * otherwise returns a literal component showing the key itself (useful
+     * for developers who need to know which key to localise).
+     * Returns {@code null} only when {@code modId} is empty.
      *
      * @param config the config entry
-     * @return a tooltip component, or {@code null}
+     * @return a tooltip component, or {@code null} if modId is empty
      */
     public static @Nullable Component desc(IConfig config) {
         String modId = config.getModId();
         if (modId.isEmpty()) return null;
         String key = modId + ".settings." + config.getName() + ".desc";
-        return I18n.exists(key) ? Component.translatable(key) : null;
+        return I18n.exists(key) ? Component.translatable(key) : Component.literal(key);
     }
 
     /**

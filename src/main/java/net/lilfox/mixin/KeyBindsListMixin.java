@@ -36,8 +36,8 @@ public class KeyBindsListMixin {
 
     @Unique
     private void lilconfig_applyOverrideLabels() {
-        if (!LilConfigOwnConfig.VANILLA_KEY_OVERRIDE.getValue()) return;
-        if (!LilConfigOwnConfig.VANILLA_UI_EMBED.getValue()) return;
+        if (!LilConfigOwnConfig.vanillaKeyOverride.getValue()) return;
+        if (!LilConfigOwnConfig.vanillaUiEmbed.getValue()) return;
         VanillaKeybindProvider provider = VanillaKeybindProvider.getInstance();
         if (!provider.isInitialized()) return;
         KeyBindsList self = (KeyBindsList) (Object) this;

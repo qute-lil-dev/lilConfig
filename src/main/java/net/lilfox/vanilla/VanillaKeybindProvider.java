@@ -29,7 +29,7 @@ import java.util.Map;
  * to vanilla actions.
  *
  * <p>Persisted to {@code config/lilconfig_vanilla_keys.json}. Active only when
- * {@code LilConfigOwnConfig.VANILLA_KEY_OVERRIDE} is enabled; the mixin that
+ * {@code LilConfigOwnConfig.vanillaKeyOverride} is enabled; the mixin that
  * reads {@link #isComboHeld} and {@link #consumeClick} is always loaded but
  * guards itself with the same flag.
  *

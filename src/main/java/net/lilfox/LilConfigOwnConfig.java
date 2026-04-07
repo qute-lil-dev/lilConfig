@@ -25,7 +25,7 @@ import net.lilfox.config.ConfigString;
  * and {@code hotkeys}) that exercise every widget type available in lilConfig.
  * They are hidden in production via {@link DevTab}.
  *
- * <p>Open this config screen in-game with the key bound to {@link #MENU_KEY}
+ * <p>Open this config screen in-game with the key bound to {@link #menuKey}
  * (default: Ctrl+Shift+L).
  */
 @LilConfigMod(modId = "lilconfig", displayName = "lilConfig")
@@ -33,7 +33,7 @@ public final class LilConfigOwnConfig {
 
     /** Enables the vanilla keybind override feature. */
     @Tab("settings")
-    public static ConfigBoolean VANILLA_KEY_OVERRIDE = ConfigBoolean.of(false);
+    public static ConfigBoolean vanillaKeyOverride = ConfigBoolean.of(false);
 
     /**
      * When {@code true}, the vanilla {@code KeyBindsScreen} opens normally but
@@ -41,12 +41,12 @@ public final class LilConfigOwnConfig {
      * When {@code false}, a flat {@link net.lilfox.gui.LilConfigScreen} is shown instead (Variant B).
      */
     @Tab("settings")
-    public static ConfigBoolean VANILLA_UI_EMBED = ConfigBoolean.of(false);
+    public static ConfigBoolean vanillaUiEmbed = ConfigBoolean.of(false);
 
     /** Hotkey that opens this config screen. */
     @Tab("settings")
     @MenuKey
-    public static ConfigHotkey MENU_KEY = ConfigHotkey.of("LEFT_CONTROL, LEFT_SHIFT, L");
+    public static ConfigHotkey menuKey = ConfigHotkey.of("LEFT_CONTROL, LEFT_SHIFT, L");
 
     // ---- Dev-only tabs: visible only in development environment (@DevTab) ----
 
@@ -55,34 +55,34 @@ public final class LilConfigOwnConfig {
 
     @DevTab()
     @Section("display")
-    public static ConfigBoolean SHOW_HUD = ConfigBoolean.of(true);
+    public static ConfigBoolean showHud = ConfigBoolean.of(true);
 
     @DevTab()
     @Section("display")
-    public static ConfigBoolean DEBUG_MODE = ConfigBoolean.of(false);
+    public static ConfigBoolean debugMode = ConfigBoolean.of(false);
 
     @DevTab()
     @Section("values")
-    public static ConfigInteger MAX_ITEMS = ConfigInteger.of(64, 1, 256);
+    public static ConfigInteger maxItems = ConfigInteger.of(64, 1, 256);
 
     @DevTab()
     @Section("values")
-    public static ConfigDouble RENDER_SCALE = ConfigDouble.of(1.0, 0.1, 4.0);
+    public static ConfigDouble renderScale = ConfigDouble.of(1.0, 0.1, 4.0);
 
     @DevTab()
     @Section("values")
-    public static ConfigOptionList<Quality> QUALITY = ConfigOptionList.of(Quality.MEDIUM);
+    public static ConfigOptionList<Quality> quality = ConfigOptionList.of(Quality.MEDIUM);
 
     @DevTab()
     @Section("network")
-    public static ConfigString SERVER_URL = ConfigString.of("localhost");
+    public static ConfigString serverUrl = ConfigString.of("localhost");
 
     @DevTab()
     @Hotkeyed(defaultKey = "LEFT_CONTROL, O")
-    public static ConfigBoolean OVERLAY = ConfigBoolean.of(false);
+    public static ConfigBoolean overlay = ConfigBoolean.of(false);
 
     @DevTab()
-    public static ConfigHotkey SCREENSHOT = ConfigHotkey.of("F2");
+    public static ConfigHotkey screenshot = ConfigHotkey.of("F2");
 
     private LilConfigOwnConfig() {}
 }

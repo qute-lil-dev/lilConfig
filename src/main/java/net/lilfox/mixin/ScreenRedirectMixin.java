@@ -38,8 +38,8 @@ public class ScreenRedirectMixin {
     @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
     private void lilconfig_redirectKeyBindsScreen(@Nullable Screen screen, CallbackInfo ci) {
         if (!(screen instanceof KeyBindsScreen)) return;
-        if (!LilConfigOwnConfig.VANILLA_KEY_OVERRIDE.getValue()) return;
-        if (LilConfigOwnConfig.VANILLA_UI_EMBED.getValue()) return; // Variant C
+        if (!LilConfigOwnConfig.vanillaKeyOverride.getValue()) return;
+        if (LilConfigOwnConfig.vanillaUiEmbed.getValue()) return; // Variant C
         VanillaKeybindProvider p = VanillaKeybindProvider.getInstance();
         if (!p.isInitialized()) return;
         Screen parent = ((Minecraft) (Object) this).screen;
