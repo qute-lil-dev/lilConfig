@@ -29,31 +29,55 @@ import org.jspecify.annotations.NonNull;
 /**
  * Scrollable list that renders one row per {@link IConfig} entry.
  *
- * <p>Row layout (all widths in px):
+ * <p>Row layout (widths in logical px, constant across scales):
  * <pre>
- *   |←LABEL_ZONE_W→|←────WIDGET_ZONE────→| [Effect?]      [Reset]
+ *   |←LABEL_ZONE_W→|←──WIDGET_ZONE──→| [T?|Effect?] [Reset]
  *                  |←HOTKEY_BTN_W→|4|←TOGGLE_BTN_W→|
  * </pre>
- * Labels are drawn at the content left edge and may extend up to {@code LABEL_ZONE_W}.
- * Widgets start at a fixed column offset ({@code LABEL_ZONE_W}) so all rows align.
- * {@code ConfigBoolean} fills the entire zone with its toggle button so it
- * aligns with the two-button layout of {@code ConfigHotkeyedBoolean}.
- * The reset button is pinned to the far-right edge of each row.
+ * Labels are drawn at the content left edge. Widgets start at a fixed
+ * column offset ({@code LABEL_ZONE_W}) so all rows align.
+ * The secondary column (mode-toggle or effect button) and reset column
+ * are at fixed X positions so Reset is the same X for every row type.
+ *
+ * <p>Button <em>height</em> scales sub-proportionally with GUI scale so that
+ * physical height grows slower than physical width:
+ * physical&nbsp;h(N)&nbsp;≈&nbsp;BASE_BTN_H&nbsp;×&nbsp;(0.75&nbsp;+&nbsp;0.25N).
+ * Example: scale&nbsp;1&nbsp;→&nbsp;20&nbsp;px; scale&nbsp;2&nbsp;→&nbsp;25&nbsp;px physical.
  */
 public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryList.ConfigRow> {
 
-    // ----- layout constants -----
+    // ----- layout constants (logical px, not affected by GUI scale) -----
     static final int HOTKEY_BTN_W  = 60;
     static final int TOGGLE_BTN_W  = 28;
     static final int ROW_PADDING   = 4;
-    /** Total widget zone = hotkey btn + gap + toggle btn; matches two-button layout width exactly. */
+    /** Total widget zone width; matches the two-button HOTKEYED_BOOLEAN layout exactly. */
     static final int WIDGET_ZONE   = HOTKEY_BTN_W + ROW_PADDING + TOGGLE_BTN_W;
-    static final int EFFECT_BTN_W  = 36;
+    /**
+     * Width of the secondary-button slot (mode-toggle or effect button).
+     * Sized to {@code EFFECT_BTN_W} so the Reset column is identical for all row types,
+     * even when only a small mode-toggle button occupies the slot.
+     */
+    static final int SECONDARY_W   = 36;
     static final int RESET_BTN_W   = 36;
-    static final int BTN_H         = 20;
-    static final int MODE_BTN_W    = BTN_H;
-    /** Fixed column offset from row left edge where all widgets begin; labels occupy the space to the left. */
+    /** Base button height at GUI scale 1 (physical px = logical px at scale 1). */
+    private static final int BASE_BTN_H   = 20;
+    /** Fixed label column width. */
     static final int LABEL_ZONE_W  = 80;
+
+    /**
+     * Button height in logical pixels, computed so that physical height grows
+     * sub-proportionally with GUI scale N:
+     * <pre>logical_h(N) = BASE_BTN_H × (0.75/N + 0.25)</pre>
+     * This yields physical_h(1)=20, physical_h(2)≈25, physical_h(3)=30.
+     * Minimum 12 px to keep text readable at large scales.
+     */
+    static int btnH() {
+        int scale = (int) Minecraft.getInstance().getWindow().getGuiScale();
+        return Math.max(12, Math.round(BASE_BTN_H * (0.75f / scale + 0.25f)));
+    }
+
+    /** Mode-toggle button is square: width equals height. */
+    static int modeBtnW() { return btnH(); }
 
     private final LilConfigScreen owner;
 
@@ -63,7 +87,7 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
             screen.width,
             screen.height - LilConfigScreen.TAB_BAR_H - LilConfigScreen.FOOTER_H,
             LilConfigScreen.TAB_BAR_H,
-            BTN_H + 8
+            btnH() + 8
         );
         this.owner = screen;
         this.centerListVertically = false;
@@ -78,7 +102,7 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
 
     @Override
     public int getRowWidth() {
-        return Math.min(owner.width - 50, 400);
+        return owner.width - 80;
     }
 
     /**
@@ -106,6 +130,10 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
         private final LilConfigScreen screen;
         private final List<AbstractWidget> widgets = new ArrayList<>();
         private Button resetButton;
+        /** Mode-toggle (T/S) button, present only for INTEGER and bounded DOUBLE. */
+        private Button modeButton;
+        /** Optional effect button supplied by the config. */
+        private Button effectButton;
         private Button hotkeyButton;
         private boolean sliderMode = true;
 
@@ -117,12 +145,14 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
 
         private void buildWidgets(LilConfigScreen screen) {
             // placeholder x/y; repositionWidgets() positions them each frame
+            modeButton = null;
+            effectButton = null;
             switch (config.getType()) {
                 case BOOLEAN -> {
                     IConfigBoolean b = (IConfigBoolean) config;
                     Button.Builder tb = Button.builder(boolLabel(b.getValue()),
                             btn -> { b.setValue(!b.getValue()); btn.setMessage(boolLabel(b.getValue())); })
-                            .size(WIDGET_ZONE, BTN_H).pos(0, 0);
+                            .size(WIDGET_ZONE, btnH()).pos(0, 0);
                     Component descTip = I18nHelper.desc(config);
                     if (descTip != null) tb.tooltip(Tooltip.create(descTip));
                     widgets.add(tb.build());
@@ -132,10 +162,10 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                     IConfigBoolean b  = (IConfigBoolean) config;
                     hotkeyButton = Button.builder(keyLabel(hk.getKeyBind(), hk),
                             btn -> screen.startRebind(hk, btn))
-                            .size(HOTKEY_BTN_W, BTN_H).pos(0, 0).build();
+                            .size(HOTKEY_BTN_W, btnH()).pos(0, 0).build();
                     Button toggleBtn = Button.builder(boolLabel(b.getValue()),
                             btn -> { b.setValue(!b.getValue()); btn.setMessage(boolLabel(b.getValue())); })
-                            .size(TOGGLE_BTN_W, BTN_H).pos(0, 0).build();
+                            .size(TOGGLE_BTN_W, btnH()).pos(0, 0).build();
                     widgets.add(hotkeyButton);
                     widgets.add(toggleBtn);
                 }
@@ -143,14 +173,13 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                     IConfigHotkey hk = (IConfigHotkey) config;
                     hotkeyButton = Button.builder(keyLabel(hk.getKeyBind(), hk),
                             btn -> screen.startRebind(hk, btn))
-                            .size(WIDGET_ZONE, BTN_H).pos(0, 0).build();
+                            .size(WIDGET_ZONE, btnH()).pos(0, 0).build();
                     widgets.add(hotkeyButton);
                 }
                 case INTEGER -> {
                     ConfigInteger ci = (ConfigInteger) config;
-                    int inputW = WIDGET_ZONE - MODE_BTN_W - ROW_PADDING;
                     if (sliderMode) {
-                        IntSlider slider = new IntSlider(0, 0, inputW, BTN_H, ci);
+                        IntSlider slider = new IntSlider(0, 0, WIDGET_ZONE, btnH(), ci);
                         Component inputTip = I18nHelper.inputDesc(config);
                         if (inputTip != null) slider.setTooltip(Tooltip.create(inputTip));
                         else slider.setTooltip(Tooltip.create(Component.translatable(
@@ -158,7 +187,7 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                         widgets.add(slider);
                     } else {
                         EditBox box = new EditBox(Minecraft.getInstance().font,
-                                0, 0, inputW, BTN_H, Component.literal(ci.getName()));
+                                0, 0, WIDGET_ZONE, btnH(), Component.literal(ci.getName()));
                         box.setValue(String.valueOf(ci.getValue()));
                         box.setResponder(s -> {
                             try { ci.setValue(Integer.parseInt(s.trim())); } catch (NumberFormatException ignored) {}
@@ -169,15 +198,16 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                                 "lilconfig.tooltip.range", ci.getMinValue(), ci.getMaxValue())));
                         widgets.add(box);
                     }
-                    widgets.add(Button.builder(
+                    modeButton = Button.builder(
                             Component.literal(sliderMode ? "T" : "S"),
                             btn -> { sliderMode = !sliderMode; rebuildWidgets(); })
-                            .size(MODE_BTN_W, BTN_H).pos(0, 0).build());
+                            .size(modeBtnW(), btnH()).pos(0, 0).build();
+                    widgets.add(modeButton);
                 }
                 case STRING -> {
                     ConfigString cs = (ConfigString) config;
                     EditBox box = new EditBox(Minecraft.getInstance().font,
-                            0, 0, WIDGET_ZONE, BTN_H,
+                            0, 0, WIDGET_ZONE, btnH(),
                             I18nHelper.label(config));
                     box.setValue(cs.getValue());
                     box.setResponder(cs::setValue);
@@ -190,7 +220,7 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                     Button.Builder ob = Button.builder(
                                     optionLabel(cfg),
                                     b -> { cfg.cycle(); b.setMessage(optionLabel(cfg)); })
-                            .size(WIDGET_ZONE, BTN_H).pos(0, 0);
+                            .size(WIDGET_ZONE, btnH()).pos(0, 0);
                     Component descTip = I18nHelper.desc(config);
                     if (descTip != null) ob.tooltip(Tooltip.create(descTip));
                     widgets.add(ob.build());
@@ -198,9 +228,8 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                 case DOUBLE -> {
                     ConfigDouble cd = (ConfigDouble) config;
                     boolean bounded = Double.isFinite(cd.getMin()) && Double.isFinite(cd.getMax());
-                    int inputW = bounded ? WIDGET_ZONE - MODE_BTN_W - ROW_PADDING : WIDGET_ZONE;
                     if (bounded && sliderMode) {
-                        DoubleSlider slider = new DoubleSlider(0, 0, inputW, BTN_H, cd);
+                        DoubleSlider slider = new DoubleSlider(0, 0, WIDGET_ZONE, btnH(), cd);
                         Component inputTip = I18nHelper.inputDesc(config);
                         if (inputTip != null) slider.setTooltip(Tooltip.create(inputTip));
                         else slider.setTooltip(Tooltip.create(Component.translatable(
@@ -208,7 +237,7 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                         widgets.add(slider);
                     } else {
                         EditBox box = new EditBox(Minecraft.getInstance().font,
-                                0, 0, inputW, BTN_H, Component.literal(cd.getName()));
+                                0, 0, WIDGET_ZONE, btnH(), Component.literal(cd.getName()));
                         box.setValue(String.valueOf(cd.getValue()));
                         box.setResponder(s -> {
                             try { cd.setValue(Double.parseDouble(s.trim())); } catch (NumberFormatException ignored) {}
@@ -222,27 +251,29 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                         widgets.add(box);
                     }
                     if (bounded) {
-                        widgets.add(Button.builder(
+                        modeButton = Button.builder(
                                 Component.literal(sliderMode ? "T" : "S"),
                                 btn -> { sliderMode = !sliderMode; rebuildWidgets(); })
-                                .size(MODE_BTN_W, BTN_H).pos(0, 0).build());
+                                .size(modeBtnW(), btnH()).pos(0, 0).build();
+                        widgets.add(modeButton);
                     }
                 }
                 case SEPARATOR -> { return; }
             }
 
-            // optional effect button
+            // optional effect button — occupies the same secondary slot as mode-toggle
             if (config.getEffectButtonLabel() != null) {
                 Runnable action = config.getEffectAction();
-                widgets.add(Button.builder(Component.translatable(config.getEffectButtonLabel()),
+                effectButton = Button.builder(Component.translatable(config.getEffectButtonLabel()),
                         btn -> { if (action != null) action.run(); })
-                        .size(EFFECT_BTN_W, BTN_H).pos(0, 0).build());
+                        .size(SECONDARY_W, btnH()).pos(0, 0).build();
+                widgets.add(effectButton);
             }
 
             // reset button
             Button resetBtn = Button.builder(Component.translatable("lilconfig.reset"), btn -> resetRow())
                     .tooltip(Tooltip.create(Component.translatable("lilconfig.tooltip.reset")))
-                    .size(RESET_BTN_W, BTN_H).pos(0, 0).build();
+                    .size(RESET_BTN_W, btnH()).pos(0, 0).build();
             widgets.add(resetButton = resetBtn);
         }
 
@@ -252,18 +283,38 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
             buildWidgets(this.screen);
         }
 
-        /** Repositions all widgets based on the entry's current content bounds. */
+        /**
+         * Repositions all widgets based on the entry's current content bounds.
+         *
+         * <p>Main widgets cascade from {@code LABEL_ZONE_W}.
+         * The secondary button (mode-toggle or effect) is at a fixed column immediately
+         * after the widget zone. Reset is at the next fixed column after that.
+         * This keeps the Reset column identical for every row type.
+         */
         private void repositionWidgets() {
-            int cy = getContentYMiddle() - BTN_H / 2;
+            int cy = getContentYMiddle() - btnH() / 2;
 
+            // fixed secondary column: right after widget zone
+            int secondaryX = getContentX() + LABEL_ZONE_W + WIDGET_ZONE + ROW_PADDING;
+            if (modeButton != null) {
+                modeButton.setX(secondaryX);
+                modeButton.setY(cy);
+            }
+            if (effectButton != null) {
+                effectButton.setX(secondaryX);
+                effectButton.setY(cy);
+            }
+
+            // fixed reset column: always SECONDARY_W + gap after secondary column
             if (resetButton != null) {
-                resetButton.setX(getContentRight() - RESET_BTN_W);
+                resetButton.setX(secondaryX + SECONDARY_W + ROW_PADDING);
                 resetButton.setY(cy);
             }
 
+            // main widgets cascade from LABEL_ZONE_W (skip secondary and reset)
             int x = getContentX() + LABEL_ZONE_W;
             for (AbstractWidget w : widgets) {
-                if (w == resetButton) continue;
+                if (w == modeButton || w == effectButton || w == resetButton) continue;
                 w.setX(x);
                 w.setY(cy);
                 x += w.getWidth() + ROW_PADDING;
