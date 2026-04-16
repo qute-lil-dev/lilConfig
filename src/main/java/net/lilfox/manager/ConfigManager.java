@@ -56,10 +56,6 @@ public final class ConfigManager {
         return INSTANCE;
     }
 
-    // -------------------------------------------------------------------------
-    // Registration
-    // -------------------------------------------------------------------------
-
     /**
      * Scans {@code configClass} (annotated with
      * {@link net.lilfox.annotation.Config}) and registers the resulting
@@ -140,7 +136,6 @@ public final class ConfigManager {
 
         List<ConflictEntry> result = new ArrayList<>();
 
-        // --- Registered lilConfig providers ---
         for (IConfigProvider provider : providers) {
             for (ConfigGroup group : provider.getConfigGroups()) {
                 for (IConfig config : group.getConfigs()) {
@@ -167,13 +162,10 @@ public final class ConfigManager {
             }
         }
 
-        // --- Native vanilla KeyMapping (controls screen assignments) ---
-        // Skip mappings that already have a VanillaKeybindProvider override — those
-        // are covered by the provider loop above.
         KeyMapping[] keyMappings = Minecraft.getInstance().options.keyMappings;
         for (KeyMapping km : keyMappings) {
             KeyBind override = vanilla.getComboForMapping(km);
-            if (!override.getKeys().isEmpty()) continue; // already covered above
+            if (!override.getKeys().isEmpty()) continue;
             InputConstants.Key rawKey = ((KeyMappingCurrentKeyAccessor) km).getCurrentKey();
             if (rawKey.equals(InputConstants.UNKNOWN)) continue;
             KeyBind vanillaBind = KeyBind.of(rawKey);
@@ -205,10 +197,6 @@ public final class ConfigManager {
         return !getConflicts(kb, owner).isEmpty();
     }
 
-    // -------------------------------------------------------------------------
-    // Persistence
-    // -------------------------------------------------------------------------
-
     /**
      * Saves all registered providers' current values to their respective JSON files.
      * Called on config screen close and on client shutdown.
@@ -218,10 +206,6 @@ public final class ConfigManager {
             ConfigSerializer.save(provider);
         }
     }
-
-    // -------------------------------------------------------------------------
-    // Hotkey tick — fire-on-press, order-aware, superset-inhibited
-    // -------------------------------------------------------------------------
 
     /**
      * Polls all registered {@link IConfigHotkey} entries and fires those whose hotkey
@@ -269,10 +253,6 @@ public final class ConfigManager {
             active.add(new Entry(hk, bind, state));
         }
 
-        // Active-key inhibition: suppress X if another currently held binding Y shares
-        // at least one key with X and Y is not a subset of X (Y contributes a key that
-        // X does not contain, meaning that key is already claimed by Y).
-        // This subsumes the old superset-inhibition rule.
         for (Entry e1 : active) {
             if (!e1.state.pendingFire) continue;
             for (Entry e2 : active) {
@@ -314,7 +294,6 @@ public final class ConfigManager {
             active.add(new MenuEntry(provider, menuKey, state));
         }
 
-        // Active-key inhibition (same rule as tickHotkeys)
         for (MenuEntry e1 : active) {
             if (!e1.state.pendingFire) continue;
             for (MenuEntry e2 : active) {
@@ -334,10 +313,6 @@ public final class ConfigManager {
         }
         return fired;
     }
-
-    // -------------------------------------------------------------------------
-    // Gesture state machine
-    // -------------------------------------------------------------------------
 
     /**
      * Tracks the gesture state for a single key binding slot across ticks.
@@ -394,7 +369,6 @@ public final class ConfigManager {
             if (curr[i]) allReleased = false;
         }
 
-        // Detect newly pressed keys and advance order tracking
         for (int i = 0; i < n; i++) {
             if (curr[i] && !state.prevHeld[i]) {
                 if (i == state.expectedNext) {
@@ -405,10 +379,8 @@ public final class ConfigManager {
             }
         }
 
-        // Fire: transition to fully-held (leading edge), order was valid.
         state.pendingFire = fullyHeld && !state.wasFullyHeld && state.orderValid();
 
-        // Reset gesture state when all keys are released
         if (allReleased) {
             state.expectedNext = 0;
             state.orderBroken = false;

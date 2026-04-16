@@ -45,11 +45,8 @@ public class KeyBindsListMixin {
         KeyMapping selectedKey = screen != null ? screen.selectedKey : null;
         for (KeyBindsList.Entry entry : self.children()) {
             if (!(entry instanceof KeyBindsEntryAccessor accessor)) continue;
-            // Vanilla shows its own editing indicator ("> KEY <" in yellow) via refreshEntry()
-            // when selectedKey == this entry's key; skip it so we don't overwrite that label.
             if (accessor.getKey() == selectedKey) continue;
             KeyBind combo = provider.getComboForMapping(accessor.getKey());
-            // No override set — let vanilla's refreshEntry() label (e.g. "None") stand as-is.
             if (combo.getKeys().isEmpty()) continue;
             accessor.getChangeButton().setMessage(Component.literal(combo.toDisplayString()));
             accessor.setHasCollision(provider.hasConflictForMapping(accessor.getKey()));

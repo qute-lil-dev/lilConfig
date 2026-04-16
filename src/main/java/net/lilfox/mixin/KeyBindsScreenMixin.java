@@ -73,7 +73,6 @@ public class KeyBindsScreenMixin {
 
         Button currentButton = lilconfig_findChangeButton(selectedKey);
         if (currentButton == null || !currentButton.isHovered()) {
-            // Click outside the active rebind button — commit and stop rebinding
             KeyBind result = lilconfig_pendingBind.getKeys().isEmpty()
                     ? KeyBind.NONE : lilconfig_pendingBind;
             VanillaKeybindProvider.getInstance().setComboForMapping(selectedKey, result);
@@ -81,11 +80,9 @@ public class KeyBindsScreenMixin {
             selectedKey = null;
             lastKeySelection = Util.getMillis();
             keyBindsList.resetMappingAndUpdateButtons();
-            // Do not cancel — let vanilla handle whatever was clicked
             return;
         }
 
-        // Click on the active rebind button — add mouse button to combo
         InputConstants.Key mouseKey = InputConstants.Type.MOUSE.getOrCreate(event.button());
         lilconfig_pendingBind = lilconfig_pendingBind.withKey(mouseKey);
         lilconfig_setButtonLabel(selectedKey,

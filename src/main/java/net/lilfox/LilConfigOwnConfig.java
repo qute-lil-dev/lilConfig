@@ -48,8 +48,6 @@ public final class LilConfigOwnConfig {
     @MenuKey
     public static ConfigHotkey menuKey = ConfigHotkey.of("LEFT_CONTROL, LEFT_SHIFT, L");
 
-    // ---- Dev-only tabs: visible only in development environment (@DevTab) ----
-
     /** Render quality preset options (dev demo). */
     public enum Quality { LOW, MEDIUM, HIGH, ULTRA }
 

@@ -27,16 +27,28 @@ public final class ConfigSeparator implements IConfig {
         this.name = name;
     }
 
+    /** {@inheritDoc} */
     @Override public String getName()                       { return name; }
+    /** {@inheritDoc} */
     @Override public String getModId()                      { return modId; }
+    /** {@inheritDoc} */
     @Override public ConfigType getType()                   { return ConfigType.SEPARATOR; }
+    /** {@inheritDoc} */
     @Override public boolean isModified()                   { return false; }
+    /** {@inheritDoc} */
     @Override public void resetToDefault()                  {}
+    /** {@inheritDoc} */
     @Override public JsonElement toJson()                   { return JsonNull.INSTANCE; }
+    /** {@inheritDoc} */
     @Override public void fromJson(JsonElement element)     {}
+    /** {@inheritDoc} */
     @Override public boolean isDirty()                      { return false; }
+    /** {@inheritDoc} */
     @Override public void markDirty()                       {}
+    /** {@inheritDoc} */
     @Override public void markClean()                       {}
+    /** {@inheritDoc} */
     @Override @Nullable public String getEffectButtonLabel() { return null; }
+    /** {@inheritDoc} */
     @Override @Nullable public Runnable getEffectAction()    { return null; }
 }

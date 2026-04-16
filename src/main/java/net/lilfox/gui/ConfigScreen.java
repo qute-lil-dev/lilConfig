@@ -87,10 +87,6 @@ public class ConfigScreen extends Screen {
         this.provider = provider;
     }
 
-    // -------------------------------------------------------------------------
-    // Screen lifecycle
-    // -------------------------------------------------------------------------
-
     @Override
     protected void init() {
         tabs.clear();
@@ -108,13 +104,11 @@ public class ConfigScreen extends Screen {
         tabBar = builder.build();
         addRenderableWidget(tabBar);
 
-        // Done button
         doneButton = Button.builder(CommonComponents.GUI_DONE, btn -> onClose())
                 .bounds(width / 2 - 100, height - FOOTER_H + 6, 200, 20)
                 .build();
         addRenderableWidget(doneButton);
 
-        // Set the content area so doLayout is called when selectTab is invoked
         tabManager.setTabArea(contentArea());
 
         if (!groupTabs.isEmpty()) {
@@ -198,22 +192,13 @@ public class ConfigScreen extends Screen {
         priorBind    = KeyBind.NONE;
     }
 
-    // -------------------------------------------------------------------------
-    // Rendering
-    // -------------------------------------------------------------------------
-
     @Override
     public void extractRenderState(@NonNull GuiGraphicsExtractor gfx, int mouseX, int mouseY, float partialTick) {
         extractMenuBackground(gfx);
         super.extractRenderState(gfx, mouseX, mouseY, partialTick);
 
-        // Draw title in the area above the tab bar
         gfx.centeredText(font, title, width / 2, TITLE_H / 2 - font.lineHeight / 2, -1);
     }
-
-    // -------------------------------------------------------------------------
-    // Hotkey rebind
-    // -------------------------------------------------------------------------
 
     /**
      * Called by a row widget when the user clicks a hotkey button to start rebinding.
@@ -236,7 +221,6 @@ public class ConfigScreen extends Screen {
         if (rebindTarget != null) {
             int key = event.key();
             if (key == GLFW.GLFW_KEY_ESCAPE || key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {
-                // First press → clear to NONE; subsequent press → confirm accumulated combo.
                 finishRebind(pendingBind.getKeys().isEmpty() ? KeyBind.NONE : pendingBind);
             } else {
                 pendingBind = pendingBind.withKey(InputConstants.Type.KEYSYM.getOrCreate(key));

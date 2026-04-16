@@ -46,7 +46,6 @@ import org.jspecify.annotations.NonNull;
  */
 public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryList.ConfigRow> {
 
-    // ----- layout constants (logical px, not affected by GUI scale) -----
     static final int HOTKEY_BTN_W  = 60;
     static final int TOGGLE_BTN_W  = 28;
     static final int ROW_PADDING   = 4;
@@ -119,8 +118,6 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
         return Component.literal(s);
     }
 
-    // -------------------------------------------------------------------------
-
     /**
      * A single row inside the list, containing the widgets for one {@link IConfig}.
      */
@@ -144,7 +141,6 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
         }
 
         private void buildWidgets(ConfigScreen screen) {
-            // placeholder x/y; repositionWidgets() positions them each frame
             modeButton = null;
             effectButton = null;
             switch (config.getType()) {
@@ -261,7 +257,6 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                 case SEPARATOR -> { return; }
             }
 
-            // optional effect button — occupies the same secondary slot as mode-toggle
             if (config.getEffectButtonLabel() != null) {
                 Runnable action = config.getEffectAction();
                 effectButton = Button.builder(Component.translatable(config.getEffectButtonLabel()),
@@ -270,7 +265,6 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                 widgets.add(effectButton);
             }
 
-            // reset button
             Button resetBtn = Button.builder(Component.translatable("lilconfig.reset"), btn -> resetRow())
                     .tooltip(Tooltip.create(Component.translatable("lilconfig.tooltip.reset")))
                     .size(RESET_BTN_W, btnH()).pos(0, 0).build();
@@ -294,7 +288,6 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
         private void repositionWidgets() {
             int cy = getContentYMiddle() - btnH() / 2;
 
-            // fixed secondary column: right after widget zone
             int secondaryX = getContentX() + LABEL_ZONE_W + WIDGET_ZONE + ROW_PADDING;
             if (modeButton != null) {
                 modeButton.setX(secondaryX);
@@ -305,13 +298,11 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                 effectButton.setY(cy);
             }
 
-            // fixed reset column: always SECONDARY_W + gap after secondary column
             if (resetButton != null) {
                 resetButton.setX(secondaryX + SECONDARY_W + ROW_PADDING);
                 resetButton.setY(cy);
             }
 
-            // main widgets cascade from LABEL_ZONE_W (skip secondary and reset)
             int x = getContentX() + LABEL_ZONE_W;
             for (AbstractWidget w : widgets) {
                 if (w == modeButton || w == effectButton || w == resetButton) continue;
@@ -331,7 +322,6 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                 List<ConflictEntry> conflicts = ConfigManager.getInstance().getConflicts(hk.getKeyBind(), hk);
                 hotkeyButton.setTooltip(Tooltip.create(buildHotkeyTooltip(hk, conflicts)));
             }
-            // Draw config name using the entry's own content coordinates, not the mouse position
             int textY = getContentY() + (getContentHeight() - Minecraft.getInstance().font.lineHeight) / 2;
             Component label = I18nHelper.label(config);
             gfx.text(Minecraft.getInstance().font, label, getContentX(), textY, -1);
@@ -358,14 +348,11 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
             return widgets;
         }
 
-        // ---- helpers ----
-
         private void resetRow() {
             config.resetToDefault();
             rebuildWidgets();
         }
 
-        // @SuppressWarnings("null"): E is Enum<E> — getValue() is never null; JDT false positive on wildcard capture.
         @SuppressWarnings("null")
         private static Component optionLabel(IConfigOptionList<?> cfg) {
             return Component.translatable(cfg.getValue().name().toLowerCase());
@@ -402,7 +389,6 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                 Component.translatable("lilconfig.tooltip.conflicts")
                          .withStyle(ChatFormatting.WHITE));
 
-            // Group by mod name (preserving insertion order)
             SequencedMap<String, List<ConflictEntry>> byMod = new LinkedHashMap<>();
             for (ConflictEntry e : conflicts) {
                 byMod.computeIfAbsent(e.modName(), k -> new ArrayList<>()).add(e);
@@ -427,8 +413,6 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
         }
     }
 
-    // -------------------------------------------------------------------------
-
     /**
      * A non-interactive row that renders a section header label.
      * Used to separate groups of entries inside a flat list (e.g. vanilla key categories).
@@ -450,8 +434,6 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
                     cx, cy, -1);
         }
     }
-
-    // -------------------------------------------------------------------------
 
     private static final class IntSlider extends AbstractSliderButton {
         private final ConfigInteger ci;

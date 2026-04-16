@@ -65,10 +65,6 @@ public final class VanillaKeybindProvider implements IConfigProvider {
         return INSTANCE;
     }
 
-    // -------------------------------------------------------------------------
-    // Lazy initialization
-    // -------------------------------------------------------------------------
-
     /**
      * Initialises the key map and config groups from the current vanilla key mappings.
      * Idempotent and thread-safe; runs at most once.
@@ -100,10 +96,6 @@ public final class VanillaKeybindProvider implements IConfigProvider {
         initialized = true;
     }
 
-    // -------------------------------------------------------------------------
-    // IConfigProvider
-    // -------------------------------------------------------------------------
-
     @Override
     public String getModId() {
         return "lilconfig_vanilla_keys";
@@ -125,10 +117,6 @@ public final class VanillaKeybindProvider implements IConfigProvider {
         return KeyBind.NONE;
     }
 
-    // -------------------------------------------------------------------------
-    // Tick — called each client tick when override is enabled
-    // -------------------------------------------------------------------------
-
     /**
      * Polls each mapped combo, applies superset inhibition, updates held state,
      * and accumulates pending clicks on the leading edge.
@@ -137,7 +125,6 @@ public final class VanillaKeybindProvider implements IConfigProvider {
     public void tick() {
         ensureInitialized();
 
-        // Step 1: compute raw held state for all entries.
         Map<KeyMapping, Boolean> heldNow = new IdentityHashMap<>(keyMap.size());
         for (Map.Entry<KeyMapping, ConfigHotkey> entry : keyMap.entrySet()) {
             KeyBind bind = entry.getValue().getKeyBind();
@@ -145,7 +132,6 @@ public final class VanillaKeybindProvider implements IConfigProvider {
             heldNow.put(entry.getKey(), held);
         }
 
-        // Step 2: superset inhibition — if a proper superset combo is also held, suppress this one.
         for (Map.Entry<KeyMapping, ConfigHotkey> e1 : keyMap.entrySet()) {
             if (!heldNow.getOrDefault(e1.getKey(), false)) continue;
             KeyBind bind1 = e1.getValue().getKeyBind();
@@ -159,7 +145,6 @@ public final class VanillaKeybindProvider implements IConfigProvider {
             }
         }
 
-        // Step 3: update prevHeld and accumulate clicks on the leading edge.
         for (Map.Entry<KeyMapping, ConfigHotkey> entry : keyMap.entrySet()) {
             KeyMapping km = entry.getKey();
             boolean held = heldNow.getOrDefault(km, false);
@@ -177,10 +162,6 @@ public final class VanillaKeybindProvider implements IConfigProvider {
         if (subKeys.size() >= supKeys.size()) return false;
         return supKeys.containsAll(subKeys);
     }
-
-    // -------------------------------------------------------------------------
-    // Mixin callbacks
-    // -------------------------------------------------------------------------
 
     /**
      * Returns {@code true} if the override combo for {@code km} is currently held.
@@ -214,10 +195,6 @@ public final class VanillaKeybindProvider implements IConfigProvider {
     public boolean isInitialized() {
         return initialized;
     }
-
-    // -------------------------------------------------------------------------
-    // Variant B / C support
-    // -------------------------------------------------------------------------
 
     /**
      * Returns the current override combo for the given vanilla key mapping,
@@ -307,8 +284,6 @@ public final class VanillaKeybindProvider implements IConfigProvider {
             boolean entryIsDebug = entry.getKey().getCategory() == KeyMapping.Category.DEBUG;
             boolean entryIsSpectator = entry.getKey().getCategory() == KeyMapping.Category.SPECTATOR;
             if (entryIsDebug != targetIsDebug || entryIsSpectator != targetIsSpectator) continue;
-            // Vanilla ships intentional duplicate defaults (e.g. debug overlay and modifier are
-            // both F3); skip conflict when both overrides are still at their default values.
             if (!target.isModified() && !entry.getValue().isModified()) continue;
             List<InputConstants.Key> ak = targetBind.getKeys();
             List<InputConstants.Key> bk = other.getKeys();

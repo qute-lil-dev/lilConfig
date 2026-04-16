@@ -67,14 +67,10 @@ final class AnnotationConfigScanner {
 
         boolean isDev = FabricLoader.getInstance().isDevelopmentEnvironment();
 
-        // Ordered map: tab id → ordered map (section bucket → entry list).
-        // LinkedHashMap preserves first-occurrence ordering for both tabs and sections.
         Map<String, Map<String, List<IConfig>>> tabMap = new LinkedHashMap<>();
 
-        // The ConfigHotkey field annotated with @MenuKey, if any.
         @Nullable IConfigHotkey menuKeyEntry = null;
 
-        // First pass: determine whether ANY field carries @Tab (or @DevTab in dev)
         boolean anyTab = false;
         for (Field f : configClass.getDeclaredFields()) {
             if (!isConfigField(f)) continue;
@@ -85,10 +81,8 @@ final class AnnotationConfigScanner {
             }
         }
 
-        // Second pass: collect entries
         for (Field f : configClass.getDeclaredFields()) {
             if (!isConfigField(f)) continue;
-            // @DevTab fields are invisible in production
             if (!isDev && f.getAnnotation(DevTab.class) != null) continue;
             f.setAccessible(true);
 
@@ -97,17 +91,14 @@ final class AnnotationConfigScanner {
 
             config = applyHotkeyed(f, config);
 
-            // Inject name and modId
             String name = toCamelCase(f.getName());
             ((ConfigBase<?>) config).setName(name);
             ((ConfigBase<?>) config).setModId(modId);
 
-            // Detect @MenuKey field
             if (f.getAnnotation(MenuKey.class) != null && config instanceof IConfigHotkey hk) {
                 menuKeyEntry = hk;
             }
 
-            // Resolve tab and section
             @Nullable Tab     tabAnn    = f.getAnnotation(Tab.class);
             @Nullable DevTab  devTabAnn = f.getAnnotation(DevTab.class);
             @Nullable Section secAnn    = f.getAnnotation(Section.class);
@@ -120,7 +111,6 @@ final class AnnotationConfigScanner {
             Map<String, List<IConfig>> sections =
                     tabMap.computeIfAbsent(tabId, k -> new LinkedHashMap<>());
 
-            // If this field has no section but the tab already has named sections → misc bucket
             String bucket = secId != null ? secId
                           : hasNamedSection(sections) ? MISC
                           : NO_SEC;
@@ -128,8 +118,6 @@ final class AnnotationConfigScanner {
             sections.computeIfAbsent(bucket, k -> new ArrayList<>()).add(config);
         }
 
-        // Third pass: entries added without a section before any named section appeared
-        // stay in NO_SEC. If the tab also has named sections, retroactively move them to misc.
         for (Map<String, List<IConfig>> sections : tabMap.values()) {
             if (hasNamedSection(sections) && sections.containsKey(NO_SEC)) {
                 List<IConfig> orphans = sections.remove(NO_SEC);
@@ -137,7 +125,6 @@ final class AnnotationConfigScanner {
             }
         }
 
-        // Build ConfigGroup list
         List<ConfigGroup> groups = new ArrayList<>();
         for (Map.Entry<String, Map<String, List<IConfig>>> tabEntry : tabMap.entrySet()) {
             Map<String, List<IConfig>> sections = tabEntry.getValue();
@@ -158,10 +145,6 @@ final class AnnotationConfigScanner {
 
         return new ScannedConfigProvider(modId, displayName, menuKeyEntry, groups);
     }
-
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
 
     private static boolean isConfigField(Field f) {
         return Modifier.isStatic(f.getModifiers())

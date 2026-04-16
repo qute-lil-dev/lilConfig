@@ -32,10 +32,6 @@ public class LilConfigClient implements ClientModInitializer {
                 client -> ConfigManager.getInstance().saveAll());
 
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
-            // Check hotkeys BEFORE clearing the sticky mouse-button window.
-            // GLFW mouse events are enqueued via Minecraft.execute() and processed
-            // before START_CLIENT_TICK fires, so pressedThisTick is already populated
-            // here. Clearing first would discard that data before it can be used.
             try {
                 if (client.level == null) return;
                 if (LilConfigOwnConfig.vanillaKeyOverride.getValue())
@@ -49,7 +45,6 @@ public class LilConfigClient implements ClientModInitializer {
                 }
                 manager.tickHotkeys(client.screen);
             } finally {
-                // Always clear after all checks, including on early return paths.
                 MouseButtonTracker.clearTickWindow();
             }
         });

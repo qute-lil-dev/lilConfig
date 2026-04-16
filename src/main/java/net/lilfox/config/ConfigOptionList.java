@@ -15,8 +15,6 @@ import java.util.Objects;
  *
  * @param <E> the enum type whose constants are the available options
  */
-// @SuppressWarnings("null"): E extends Enum<E> — values are always non-null;
-// false positive from JDT null analysis on free type variables.
 @SuppressWarnings("null")
 public class ConfigOptionList<E extends Enum<E>> extends ConfigBase<E> implements IConfigOptionList<E> {
 
