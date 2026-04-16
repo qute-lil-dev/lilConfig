@@ -1,7 +1,7 @@
 package net.lilfox.mixin;
 
 import net.lilfox.LilConfigOwnConfig;
-import net.lilfox.gui.LilConfigScreen;
+import net.lilfox.gui.ConfigScreen;
 import net.lilfox.vanilla.VanillaKeybindProvider;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * <p>The injection fires at {@code HEAD} before {@code Minecraft.screen} is
  * replaced, so the current screen is captured as the parent for the replacement.
  * Cancelling the original call and immediately issuing a new {@code setScreen}
- * for {@link LilConfigScreen} means the full {@code setScreen} logic still
+ * for {@link ConfigScreen} means the full {@code setScreen} logic still
  * runs — just for the lilConfig screen rather than the vanilla one.
  */
 @Mixin(Minecraft.class)
@@ -30,7 +30,7 @@ public class ScreenRedirectMixin {
      * is enabled, decides which variant to use:
      * <ul>
      *   <li>Variant B ({@code vanilla_ui_embed=false}): cancels and opens a flat
-     *       {@link LilConfigScreen} via {@link VanillaKeybindProvider#asFlatProvider()}.</li>
+     *       {@link ConfigScreen} via {@link VanillaKeybindProvider#asFlatProvider()}.</li>
      *   <li>Variant C ({@code vanilla_ui_embed=true}): lets the original {@link KeyBindsScreen}
      *       open; key input is intercepted by {@code KeyBindsScreenMixin}.</li>
      * </ul>
@@ -44,6 +44,6 @@ public class ScreenRedirectMixin {
         if (!p.isInitialized()) return;
         Screen parent = ((Minecraft) (Object) this).screen;
         ci.cancel();
-        ((Minecraft) (Object) this).setScreen(LilConfigScreen.create(parent, p.asFlatProvider()));
+        ((Minecraft) (Object) this).setScreen(ConfigScreen.create(parent, p.asFlatProvider()));
     }
 }

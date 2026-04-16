@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  * <p>Apply to a class that holds {@code public static} config fields.
  * Register with:
  * <pre>{@code
- * LilConfigManager.getInstance().register(MyModConfig.class);
+ * ConfigManager.getInstance().register(MyModConfig.class);
  * }</pre>
  *
  * <p>To enable an in-game hotkey that opens the config screen, annotate a
@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface LilConfigMod {
+public @interface Config {
 
     /** The mod ID used as the JSON file name and i18n key prefix. */
     String modId();

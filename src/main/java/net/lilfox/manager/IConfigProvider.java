@@ -11,14 +11,14 @@ import java.util.List;
  * <p><b>Mod authors should not implement this interface directly.</b>
  * Use the annotation-based API instead:
  * <pre>{@code
- * @LilConfigMod(modId = "mymod")
+ * @Config(modId = "mymod")
  * public class MyModConfig {
  *     @Tab("general")
  *     public static ConfigBoolean ENABLED = ConfigBoolean.of(true);
  * }
  *
  * // In ClientModInitializer:
- * LilConfigManager.getInstance().register(MyModConfig.class);
+ * ConfigManager.getInstance().register(MyModConfig.class);
  * }</pre>
  *
  * <p>This interface remains public only because internal classes in sibling packages

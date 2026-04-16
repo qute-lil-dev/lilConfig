@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
  * player's currently assigned key (as opposed to {@link KeyMapping#getDefaultKey()}
  * which returns the shipped default).
  *
- * <p>Used by {@link net.lilfox.manager.LilConfigManager#getConflicts} to detect
+ * <p>Used by {@link net.lilfox.manager.ConfigManager#getConflicts} to detect
  * conflicts between lilConfig hotkeys and vanilla key bindings that the player
  * has not overridden through the VanillaKeybindProvider.
  */

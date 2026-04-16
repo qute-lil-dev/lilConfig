@@ -8,7 +8,7 @@ import net.lilfox.config.IConfig;
 import net.lilfox.config.IConfigHotkey;
 import net.lilfox.hotkey.KeyBind;
 import net.lilfox.manager.IConfigProvider;
-import net.lilfox.manager.LilConfigManager;
+import net.lilfox.manager.ConfigManager;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -327,7 +327,7 @@ public final class VanillaKeybindProvider implements IConfigProvider {
         ensureInitialized();
         ConfigHotkey hk = keyMap.get(km);
         if (hk != null) hk.setKeyBind(bind);
-        LilConfigManager.getInstance().saveAll();
+        ConfigManager.getInstance().saveAll();
     }
 
     /**
@@ -350,8 +350,8 @@ public final class VanillaKeybindProvider implements IConfigProvider {
 
     /**
      * Returns a transient {@link IConfigProvider} wrapping the flat group.
-     * This provider is never registered with {@link LilConfigManager} — it is used
-     * only to open {@link net.lilfox.gui.LilConfigScreen} in Variant B.
+     * This provider is never registered with {@link ConfigManager} — it is used
+     * only to open {@link net.lilfox.gui.ConfigScreen} in Variant B.
      * Persistence is handled by the registered {@link VanillaKeybindProvider}.
      */
     public IConfigProvider asFlatProvider() {

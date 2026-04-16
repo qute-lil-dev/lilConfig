@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  * this mod's config screen.
  *
  * <p>Apply to exactly one {@code public static ConfigHotkey} field in a
- * {@link LilConfigMod}-annotated class. The current value of that field is read
+ * {@link Config}-annotated class. The current value of that field is read
  * every tick, so player rebinds take effect immediately.
  *
  * <p>If no field carries this annotation, the config screen is accessible only

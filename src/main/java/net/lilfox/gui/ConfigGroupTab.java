@@ -27,7 +27,7 @@ public class ConfigGroupTab implements Tab {
      * @param screen  the owning screen (needed to size the list)
      * @param modId   the owning mod id, used to resolve the tab i18n key
      */
-    public ConfigGroupTab(ConfigGroup group, LilConfigScreen screen, String modId) {
+    public ConfigGroupTab(ConfigGroup group, ConfigScreen screen, String modId) {
         this.title = I18nHelper.tabLabel(modId, group.getName());
         this.list  = new ConfigEntryList(screen, group);
     }

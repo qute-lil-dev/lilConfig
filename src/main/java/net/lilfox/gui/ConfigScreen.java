@@ -16,7 +16,7 @@ import net.lilfox.config.IConfig;
 import net.lilfox.config.IConfigHotkey;
 import net.lilfox.hotkey.KeyBind;
 import net.lilfox.manager.IConfigProvider;
-import net.lilfox.manager.LilConfigManager;
+import net.lilfox.manager.ConfigManager;
 
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
@@ -34,7 +34,7 @@ import java.util.List;
  *   [    Done button    ]   ← FOOTER_H px
  * </pre>
  */
-public class LilConfigScreen extends Screen {
+public class ConfigScreen extends Screen {
 
     /** Height of the title area above the tab navigation bar. */
     static final int TITLE_H   = 20;
@@ -66,7 +66,7 @@ public class LilConfigScreen extends Screen {
      */
     public static void open(IConfigProvider provider) {
         Minecraft mc = Minecraft.getInstance();
-        mc.setScreen(new LilConfigScreen(mc.screen, provider));
+        mc.setScreen(new ConfigScreen(mc.screen, provider));
     }
 
     /**
@@ -75,13 +75,13 @@ public class LilConfigScreen extends Screen {
      *
      * @param parent   the screen to return to when this screen is closed
      * @param provider the config provider to display
-     * @return a new {@code LilConfigScreen} instance
+     * @return a new {@code ConfigScreen} instance
      */
-    public static LilConfigScreen create(Screen parent, IConfigProvider provider) {
-        return new LilConfigScreen(parent, provider);
+    public static ConfigScreen create(Screen parent, IConfigProvider provider) {
+        return new ConfigScreen(parent, provider);
     }
 
-    private LilConfigScreen(Screen parent, IConfigProvider provider) {
+    private ConfigScreen(Screen parent, IConfigProvider provider) {
         super(Component.literal(provider.getDisplayName()));
         this.parent   = parent;
         this.provider = provider;
@@ -158,7 +158,7 @@ public class LilConfigScreen extends Screen {
     @Override
     public void onClose() {
         commitRebind();
-        LilConfigManager.getInstance().saveAll();
+        ConfigManager.getInstance().saveAll();
         minecraft.setScreen(parent);
     }
 

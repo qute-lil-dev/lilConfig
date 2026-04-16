@@ -3,7 +3,7 @@ package net.lilfox.manager;
 import net.fabricmc.loader.api.FabricLoader;
 import net.lilfox.annotation.DevTab;
 import net.lilfox.annotation.Hotkeyed;
-import net.lilfox.annotation.LilConfigMod;
+import net.lilfox.annotation.Config;
 import net.lilfox.annotation.MenuKey;
 import net.lilfox.annotation.Section;
 import net.lilfox.annotation.Tab;
@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Scans a class annotated with {@link LilConfigMod} and builds an
+ * Scans a class annotated with {@link Config} and builds an
  * {@link IConfigProvider} adapter from its static {@link IConfig} fields.
  *
  * <p>Field processing rules:
@@ -49,17 +49,17 @@ final class AnnotationConfigScanner {
     /**
      * Scans {@code configClass} and returns an {@link IConfigProvider} adapter.
      *
-     * @param configClass the class annotated with {@link LilConfigMod}
+     * @param configClass the class annotated with {@link Config}
      * @return a provider ready for registration
-     * @throws IllegalArgumentException if the class lacks {@link LilConfigMod}
+     * @throws IllegalArgumentException if the class lacks {@link Config}
      * @see #toCamelCase(String)
      */
     @SuppressWarnings("null")   // getAnnotation() can return null; IDE null-analysis is imprecise here
     static IConfigProvider scan(Class<?> configClass) {
-        @Nullable LilConfigMod meta = configClass.getAnnotation(LilConfigMod.class);
+        @Nullable Config meta = configClass.getAnnotation(Config.class);
         if (meta == null) {
             throw new IllegalArgumentException(
-                    configClass.getName() + " is not annotated with @LilConfigMod");
+                    configClass.getName() + " is not annotated with @Config");
         }
 
         String modId       = meta.modId();

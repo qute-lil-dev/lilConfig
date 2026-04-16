@@ -13,8 +13,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.lilfox.config.*;
 import net.lilfox.hotkey.KeyBind;
-import net.lilfox.manager.LilConfigManager;
-import net.lilfox.manager.LilConfigManager.ConflictEntry;
+import net.lilfox.manager.ConfigManager;
+import net.lilfox.manager.ConfigManager.ConflictEntry;
 import net.lilfox.util.I18nHelper;
 import org.lwjgl.glfw.GLFW;
 
@@ -79,14 +79,14 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
     /** Mode-toggle button is square: width equals height. */
     static int modeBtnW() { return btnH(); }
 
-    private final LilConfigScreen owner;
+    private final ConfigScreen owner;
 
-    public ConfigEntryList(LilConfigScreen screen, ConfigGroup group) {
+    public ConfigEntryList(ConfigScreen screen, ConfigGroup group) {
         super(
             Minecraft.getInstance(),
             screen.width,
-            screen.height - LilConfigScreen.TAB_BAR_H - LilConfigScreen.FOOTER_H,
-            LilConfigScreen.TAB_BAR_H,
+            screen.height - ConfigScreen.TAB_BAR_H - ConfigScreen.FOOTER_H,
+            ConfigScreen.TAB_BAR_H,
             btnH() + 8
         );
         this.owner = screen;
@@ -113,7 +113,7 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
      */
     static Component keyLabel(KeyBind kb, IConfigHotkey owner) {
         String s = kb.getKeys().isEmpty() ? "---" : kb.toDisplayString();
-        if (LilConfigManager.getInstance().isConflicting(kb, owner)) {
+        if (ConfigManager.getInstance().isConflicting(kb, owner)) {
             return Component.literal(s).withStyle(ChatFormatting.GOLD);
         }
         return Component.literal(s);
@@ -127,7 +127,7 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
     public static class ConfigRow extends ContainerObjectSelectionList.Entry<ConfigRow> {
 
         protected final IConfig config;
-        private final LilConfigScreen screen;
+        private final ConfigScreen screen;
         private final List<AbstractWidget> widgets = new ArrayList<>();
         private Button resetButton;
         /** Mode-toggle (T/S) button, present only for INTEGER and bounded DOUBLE. */
@@ -137,13 +137,13 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
         private Button hotkeyButton;
         private boolean sliderMode = true;
 
-        public ConfigRow(IConfig config, LilConfigScreen screen) {
+        public ConfigRow(IConfig config, ConfigScreen screen) {
             this.config = config;
             this.screen = screen;
             buildWidgets(screen);
         }
 
-        private void buildWidgets(LilConfigScreen screen) {
+        private void buildWidgets(ConfigScreen screen) {
             // placeholder x/y; repositionWidgets() positions them each frame
             modeButton = null;
             effectButton = null;
@@ -328,7 +328,7 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
             if (hotkeyButton != null && !screen.isRebinding(config)) {
                 IConfigHotkey hk = (IConfigHotkey) config;
                 hotkeyButton.setMessage(keyLabel(hk.getKeyBind(), hk));
-                List<ConflictEntry> conflicts = LilConfigManager.getInstance().getConflicts(hk.getKeyBind(), hk);
+                List<ConflictEntry> conflicts = ConfigManager.getInstance().getConflicts(hk.getKeyBind(), hk);
                 hotkeyButton.setTooltip(Tooltip.create(buildHotkeyTooltip(hk, conflicts)));
             }
             // Draw config name using the entry's own content coordinates, not the mouse position
@@ -435,7 +435,7 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
      */
     public static class SeparatorRow extends ConfigRow {
 
-        public SeparatorRow(IConfig config, LilConfigScreen screen) {
+        public SeparatorRow(IConfig config, ConfigScreen screen) {
             super(config, screen);
         }
 

@@ -2,7 +2,7 @@ package net.lilfox;
 
 import net.lilfox.annotation.DevTab;
 import net.lilfox.annotation.Hotkeyed;
-import net.lilfox.annotation.LilConfigMod;
+import net.lilfox.annotation.Config;
 import net.lilfox.annotation.MenuKey;
 import net.lilfox.annotation.Section;
 import net.lilfox.annotation.Tab;
@@ -28,7 +28,7 @@ import net.lilfox.config.ConfigString;
  * <p>Open this config screen in-game with the key bound to {@link #menuKey}
  * (default: Ctrl+Shift+L).
  */
-@LilConfigMod(modId = "lilconfig", displayName = "lilConfig")
+@Config(modId = "lilconfig", displayName = "lilConfig")
 public final class LilConfigOwnConfig {
 
     /** Enables the vanilla keybind override feature. */
@@ -38,7 +38,7 @@ public final class LilConfigOwnConfig {
     /**
      * When {@code true}, the vanilla {@code KeyBindsScreen} opens normally but
      * key input is intercepted to accumulate multi-key combos (Variant C).
-     * When {@code false}, a flat {@link net.lilfox.gui.LilConfigScreen} is shown instead (Variant B).
+     * When {@code false}, a flat {@link net.lilfox.gui.ConfigScreen} is shown instead (Variant B).
      */
     @Tab("settings")
     public static ConfigBoolean vanillaUiEmbed = ConfigBoolean.of(false);

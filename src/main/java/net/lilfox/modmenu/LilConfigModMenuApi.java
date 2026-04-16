@@ -2,9 +2,9 @@ package net.lilfox.modmenu;
 
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
-import net.lilfox.gui.LilConfigScreen;
+import net.lilfox.gui.ConfigScreen;
 import net.lilfox.manager.IConfigProvider;
-import net.lilfox.manager.LilConfigManager;
+import net.lilfox.manager.ConfigManager;
 
 /**
  * ModMenu integration entrypoint for lilConfig.
@@ -20,9 +20,9 @@ public class LilConfigModMenuApi implements ModMenuApi {
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
         return parent -> {
-            for (IConfigProvider provider : LilConfigManager.getInstance().getProviders()) {
+            for (IConfigProvider provider : ConfigManager.getInstance().getProviders()) {
                 if ("lilconfig".equals(provider.getModId())) {
-                    return LilConfigScreen.create(parent, provider);
+                    return ConfigScreen.create(parent, provider);
                 }
             }
             return null;

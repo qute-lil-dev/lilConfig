@@ -38,9 +38,9 @@ import java.util.List;
  * were pressed in recorded order and no superset binding was simultaneously active
  * (superset inhibition).
  */
-public final class LilConfigManager {
+public final class ConfigManager {
 
-    private static final LilConfigManager INSTANCE = new LilConfigManager();
+    private static final ConfigManager INSTANCE = new ConfigManager();
 
     private final List<IConfigProvider> providers = new ArrayList<>();
     private final List<IConfigHotkey> allHotkeys = new ArrayList<>();
@@ -49,10 +49,10 @@ public final class LilConfigManager {
     private final Map<Object, GestureState> gestureStates =
             Collections.synchronizedMap(new IdentityHashMap<>());
 
-    private LilConfigManager() {}
+    private ConfigManager() {}
 
     /** Returns the singleton instance. */
-    public static LilConfigManager getInstance() {
+    public static ConfigManager getInstance() {
         return INSTANCE;
     }
 
@@ -62,11 +62,11 @@ public final class LilConfigManager {
 
     /**
      * Scans {@code configClass} (annotated with
-     * {@link net.lilfox.annotation.LilConfigMod}) and registers the resulting
+     * {@link net.lilfox.annotation.Config}) and registers the resulting
      * provider. Equivalent to calling
      * {@link #register(IConfigProvider) register(AnnotationConfigScanner.scan(configClass))}.
      *
-     * @param configClass the config holder class annotated with {@code @LilConfigMod}
+     * @param configClass the config holder class annotated with {@code @Config}
      * @throws IllegalArgumentException if the class lacks the annotation or a provider
      *                                  with the same mod ID is already registered
      */
