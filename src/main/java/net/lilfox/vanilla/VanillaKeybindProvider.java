@@ -1,6 +1,7 @@
 package net.lilfox.vanilla;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import net.lilfox.LilConfigOwnConfig;
 import net.lilfox.config.ConfigGroup;
 import net.lilfox.config.ConfigHotkey;
 import net.lilfox.config.ConfigSeparator;
@@ -135,13 +136,20 @@ public final class VanillaKeybindProvider implements IConfigProvider {
         for (Map.Entry<KeyMapping, ConfigHotkey> e1 : keyMap.entrySet()) {
             if (!heldNow.getOrDefault(e1.getKey(), false)) continue;
             KeyBind bind1 = e1.getValue().getKeyBind();
+            boolean suppressed = false;
             for (Map.Entry<KeyMapping, ConfigHotkey> e2 : keyMap.entrySet()) {
                 if (e2.getKey() == e1.getKey()) continue;
                 if (!heldNow.getOrDefault(e2.getKey(), false)) continue;
                 if (isProperSubset(bind1, e2.getValue().getKeyBind())) {
-                    heldNow.put(e1.getKey(), false);
+                    suppressed = true;
                     break;
                 }
+            }
+            if (!suppressed) {
+                suppressed = ConfigManager.getInstance().isAnySupersetPressed(bind1);
+            }
+            if (suppressed) {
+                heldNow.put(e1.getKey(), false);
             }
         }
 
@@ -207,6 +215,46 @@ public final class VanillaKeybindProvider implements IConfigProvider {
         ensureInitialized();
         ConfigHotkey hk = keyMap.get(km);
         return hk != null ? hk.getKeyBind() : KeyBind.NONE;
+    }
+
+    /**
+     * Returns {@code true} if the override combo for {@code km} has been explicitly
+     * configured (differs from its default). Used by conflict detection to decide
+     * whether to check the native current key or only the override.
+     *
+     * @param km the vanilla key mapping to query
+     * @return {@code true} if the override has been modified from its default
+     */
+    public boolean isOverrideModified(KeyMapping km) {
+        ensureInitialized();
+        ConfigHotkey hk = keyMap.get(km);
+        return hk != null && hk.isModified();
+    }
+
+    /**
+     * Returns {@code true} if the override for {@code km} is currently active:
+     * the vanilla key override feature is enabled AND the override has been
+     * explicitly configured (differs from its default). When the feature is
+     * disabled, configured combos do not intercept vanilla keys and should not
+     * be used for conflict detection.
+     *
+     * @param km the vanilla key mapping to query
+     * @return {@code true} if the override is both enabled and modified
+     */
+    public boolean isOverrideActive(KeyMapping km) {
+        return LilConfigOwnConfig.vanillaKeyOverride.getValue() && isOverrideModified(km);
+    }
+
+    /**
+     * Returns the vanilla {@link KeyMapping} that owns {@code hk}, or {@code null}
+     * if {@code hk} is not managed by this provider. Used by conflict detection to
+     * skip a vanilla entry's own mapping when scanning for conflicts.
+     *
+     * @param hk the config hotkey to look up
+     * @return the corresponding {@link KeyMapping}, or {@code null}
+     */
+    public @Nullable KeyMapping getKeyMappingForHotkey(IConfigHotkey hk) {
+        return reverseKeyMap.get(hk);
     }
 
     /**

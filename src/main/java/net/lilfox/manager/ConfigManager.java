@@ -134,9 +134,13 @@ public final class ConfigManager {
         boolean ownerIsSpectator = owner != null && vanilla.isSpectatorHotkey(owner);
         List<InputConstants.Key> ak = kb.getKeys();
 
+        KeyMapping ownerKm = owner != null ? vanilla.getKeyMappingForHotkey(owner) : null;
+        boolean ownerIsVanillaAtDefault = ownerKm != null && !vanilla.isOverrideModified(ownerKm);
+
         List<ConflictEntry> result = new ArrayList<>();
 
         for (IConfigProvider provider : providers) {
+            if (provider == vanilla) continue;
             for (ConfigGroup group : provider.getConfigGroups()) {
                 for (IConfig config : group.getConfigs()) {
                     if (!(config instanceof IConfigHotkey hk)) continue;
@@ -145,11 +149,6 @@ public final class ConfigManager {
                     if (other.getKeys().isEmpty()) continue;
                     if (ownerIsDebug != vanilla.isDebugHotkey(hk)) continue;
                     if (ownerIsSpectator != vanilla.isSpectatorHotkey(hk)) continue;
-                    if (owner != null
-                            && vanilla.isVanillaHotkey(owner)
-                            && vanilla.isVanillaHotkey(hk)
-                            && !owner.isModified()
-                            && !hk.isModified()) continue;
                     List<InputConstants.Key> bk = other.getKeys();
                     if (bk.containsAll(ak) || ak.containsAll(bk)) {
                         result.add(new ConflictEntry(
@@ -162,23 +161,34 @@ public final class ConfigManager {
             }
         }
 
-        KeyMapping[] keyMappings = Minecraft.getInstance().options.keyMappings;
-        for (KeyMapping km : keyMappings) {
-            KeyBind override = vanilla.getComboForMapping(km);
-            if (!override.getKeys().isEmpty()) continue;
-            InputConstants.Key rawKey = ((KeyMappingCurrentKeyAccessor) km).getCurrentKey();
-            if (rawKey.equals(InputConstants.UNKNOWN)) continue;
-            KeyBind vanillaBind = KeyBind.of(rawKey);
-            List<InputConstants.Key> bk = vanillaBind.getKeys();
+        String vanillaLabel = Component.translatable("lilconfig.tooltip.conflicts.vanilla").getString();
+        for (KeyMapping km : Minecraft.getInstance().options.keyMappings) {
+            if (km == ownerKm) continue;
+            boolean isDebug = km.getCategory() == KeyMapping.Category.DEBUG;
+            boolean isSpectator = km.getCategory() == KeyMapping.Category.SPECTATOR;
+            if (isDebug != ownerIsDebug || isSpectator != ownerIsSpectator) continue;
+
+            KeyBind effectiveBind;
+            String keyDisplay;
+            if (vanilla.isOverrideActive(km)) {
+                effectiveBind = vanilla.getComboForMapping(km);
+                if (effectiveBind.getKeys().isEmpty()) continue;
+                keyDisplay = effectiveBind.toDisplayString();
+            } else {
+                InputConstants.Key rawKey = ((KeyMappingCurrentKeyAccessor) km).getCurrentKey();
+                if (rawKey.equals(InputConstants.UNKNOWN)) continue;
+                if (ownerIsVanillaAtDefault && rawKey.equals(km.getDefaultKey())) continue;
+                effectiveBind = KeyBind.of(rawKey);
+                keyDisplay = rawKey.getDisplayName().getString();
+            }
+
+            List<InputConstants.Key> bk = effectiveBind.getKeys();
             if (bk.containsAll(ak) || ak.containsAll(bk)) {
-                boolean isDebug = km.getCategory() == KeyMapping.Category.DEBUG;
-                boolean isSpectator = km.getCategory() == KeyMapping.Category.SPECTATOR;
-                if (isDebug != ownerIsDebug || isSpectator != ownerIsSpectator) continue;
                 result.add(new ConflictEntry(
-                        Component.translatable("lilconfig.tooltip.conflicts.vanilla").getString(),
+                        vanillaLabel,
                         km.getCategory().label().getString(),
                         Component.translatable(km.getName()),
-                        rawKey.getDisplayName().getString()));
+                        keyDisplay));
             }
         }
 
@@ -195,6 +205,30 @@ public final class ConfigManager {
      */
     public boolean isConflicting(KeyBind kb, @Nullable IConfigHotkey owner) {
         return !getConflicts(kb, owner).isEmpty();
+    }
+
+    /**
+     * Returns {@code true} if any registered hotkey has a combo that strictly contains
+     * all keys of {@code sub} (proper superset) and is currently fully pressed.
+     * Used by {@link net.lilfox.vanilla.VanillaKeybindProvider} to suppress vanilla
+     * override subsets when a lilconfig superset combo is held.
+     *
+     * @param sub the binding to test as a potential subset
+     * @return {@code true} if a pressed proper superset exists
+     */
+    public boolean isAnySupersetPressed(KeyBind sub) {
+        List<InputConstants.Key> subKeys = sub.getKeys();
+        if (subKeys.isEmpty()) return false;
+        for (IConfigHotkey hk : allHotkeys) {
+            KeyBind bind = hk.getKeyBind();
+            List<InputConstants.Key> bindKeys = bind.getKeys();
+            if (bindKeys.size() > subKeys.size()
+                    && bindKeys.containsAll(subKeys)
+                    && bind.isPressed()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

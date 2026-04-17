@@ -62,6 +62,7 @@ public class ConfigHotkey extends ConfigBase<KeyBind> implements IConfigHotkey {
     @Override
     public void setKeyBind(KeyBind keyBind) {
         this.value = keyBind != null ? keyBind : KeyBind.NONE;
+        notifyChanged();
     }
 
     /** {@inheritDoc} */

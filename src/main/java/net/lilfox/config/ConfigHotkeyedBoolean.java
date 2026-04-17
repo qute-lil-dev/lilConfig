@@ -98,6 +98,7 @@ public class ConfigHotkeyedBoolean extends ConfigBoolean implements IConfigHotke
     @Override
     public void setKeyBind(KeyBind keyBind) {
         this.keyBind = keyBind != null ? keyBind : KeyBind.NONE;
+        markDirty();
     }
 
     /** {@inheritDoc} */

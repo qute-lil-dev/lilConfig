@@ -2,6 +2,7 @@ package net.lilfox.mixin;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.lilfox.LilConfigOwnConfig;
+import net.lilfox.hotkey.HeldKeysTracker;
 import net.lilfox.hotkey.KeyBind;
 import net.lilfox.vanilla.VanillaKeybindProvider;
 import net.minecraft.client.KeyMapping;
@@ -56,8 +57,11 @@ public class KeyBindsScreenMixin {
             lastKeySelection = Util.getMillis();
             keyBindsList.resetMappingAndUpdateButtons();
         } else {
-            InputConstants.Key inputKey = InputConstants.Type.KEYSYM.getOrCreate(key);
-            lilconfig_pendingBind = lilconfig_pendingBind.withKey(inputKey);
+            lilconfig_pendingBind = lilconfig_pendingBind.withKey(InputConstants.Type.KEYSYM.getOrCreate(key));
+            for (int k : HeldKeysTracker.held()) {
+                if (k == GLFW.GLFW_KEY_ESCAPE || k == GLFW.GLFW_KEY_ENTER || k == GLFW.GLFW_KEY_KP_ENTER) continue;
+                lilconfig_pendingBind = lilconfig_pendingBind.withKey(InputConstants.Type.KEYSYM.getOrCreate(k));
+            }
             lilconfig_setButtonLabel(selectedKey,
                     lilconfig_pendingBind.toDisplayString() + " ...");
         }
@@ -105,4 +109,5 @@ public class KeyBindsScreenMixin {
         Button btn = lilconfig_findChangeButton(km);
         if (btn != null) btn.setMessage(Component.literal(label));
     }
+
 }

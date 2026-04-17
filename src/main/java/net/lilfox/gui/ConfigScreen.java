@@ -14,6 +14,7 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.lilfox.config.IConfig;
 import net.lilfox.config.IConfigHotkey;
+import net.lilfox.hotkey.HeldKeysTracker;
 import net.lilfox.hotkey.KeyBind;
 import net.lilfox.manager.IConfigProvider;
 import net.lilfox.manager.ConfigManager;
@@ -156,6 +157,20 @@ public class ConfigScreen extends Screen {
         minecraft.setScreen(parent);
     }
 
+    @Override
+    public void tick() {
+        super.tick();
+        if (rebindTarget == null) return;
+        for (int k : HeldKeysTracker.held()) {
+            if (k == GLFW.GLFW_KEY_ESCAPE || k == GLFW.GLFW_KEY_ENTER || k == GLFW.GLFW_KEY_KP_ENTER) continue;
+            KeyBind next = pendingBind.withKey(InputConstants.Type.KEYSYM.getOrCreate(k));
+            if (next != pendingBind) {
+                pendingBind = next;
+                rebindButton.setMessage(Component.literal(pendingBind.toDisplayString() + " ..."));
+            }
+        }
+    }
+
     /**
      * Returns {@code true} if {@code config} is the entry currently being rebound.
      * Used by {@link ConfigEntryList.ConfigRow} to skip per-frame label updates
@@ -224,6 +239,10 @@ public class ConfigScreen extends Screen {
                 finishRebind(pendingBind.getKeys().isEmpty() ? KeyBind.NONE : pendingBind);
             } else {
                 pendingBind = pendingBind.withKey(InputConstants.Type.KEYSYM.getOrCreate(key));
+                for (int k : HeldKeysTracker.held()) {
+                    if (k == GLFW.GLFW_KEY_ESCAPE || k == GLFW.GLFW_KEY_ENTER || k == GLFW.GLFW_KEY_KP_ENTER) continue;
+                    pendingBind = pendingBind.withKey(InputConstants.Type.KEYSYM.getOrCreate(k));
+                }
                 rebindButton.setMessage(Component.literal(pendingBind.toDisplayString() + " ..."));
             }
             return true;

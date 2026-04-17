@@ -4,6 +4,7 @@
   "package": "net.lilfox.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
+              "KeyboardHandlerMixin",
               "KeyMappingMixin",
               "MouseHandlerMixin",
               "ScreenRedirectMixin",
