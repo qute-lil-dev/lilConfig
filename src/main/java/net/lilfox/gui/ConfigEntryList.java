@@ -38,11 +38,6 @@ import org.jspecify.annotations.NonNull;
  * column offset ({@code LABEL_ZONE_W}) so all rows align.
  * The secondary column (mode-toggle or effect button) and reset column
  * are at fixed X positions so Reset is the same X for every row type.
- *
- * <p>Button <em>height</em> scales sub-proportionally with GUI scale so that
- * physical height grows slower than physical width:
- * physical&nbsp;h(N)&nbsp;≈&nbsp;BASE_BTN_H&nbsp;×&nbsp;(0.75&nbsp;+&nbsp;0.25N).
- * Example: scale&nbsp;1&nbsp;→&nbsp;20&nbsp;px; scale&nbsp;2&nbsp;→&nbsp;25&nbsp;px physical.
  */
 public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryList.ConfigRow> {
 
@@ -58,22 +53,12 @@ public class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryLis
      */
     static final int SECONDARY_W   = 36;
     static final int RESET_BTN_W   = 36;
-    /** Base button height at GUI scale 1 (physical px = logical px at scale 1). */
     private static final int BASE_BTN_H   = 20;
     /** Fixed label column width. */
     static final int LABEL_ZONE_W  = 80;
 
-    /**
-     * Button height in logical pixels, computed so that physical height grows
-     * sub-proportionally with GUI scale N:
-     * <pre>logical_h(N) = BASE_BTN_H × (0.75/N + 0.25)</pre>
-     * This yields physical_h(1)=20, physical_h(2)≈25, physical_h(3)=30.
-     * Minimum 12 px to keep text readable at large scales.
-     */
-    static int btnH() {
-        int scale = (int) Minecraft.getInstance().getWindow().getGuiScale();
-        return Math.max(12, Math.round(BASE_BTN_H * (0.75f / scale + 0.25f)));
-    }
+    /** Button height in logical pixels. */
+    static int btnH() { return BASE_BTN_H; }
 
     /** Mode-toggle button is square: width equals height. */
     static int modeBtnW() { return btnH(); }
